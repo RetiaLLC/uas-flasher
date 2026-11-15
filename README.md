@@ -139,7 +139,7 @@ The first board step: a master, read through the page, flashed with the release 
 
 ## Licences of what is served
 
-- esptool-js 0.7.1: Apache License 2.0, `site/vendor/esptool-js/LICENSE`. See `VENDOR.md` beside it.
+- esptool-js 0.7.1: Apache License 2.0, `site/vendor/esptool-js/LICENSE.txt`. See `VENDOR.md` beside it.
 - Space Grotesk and JetBrains Mono: SIL Open Font License 1.1, `site/vendor/fonts/README.txt`.
 - The firmware images are built on ESP-IDF 5.5.1 (Apache License 2.0). The Remote ID sensor's firmware is under the Apache License 2.0.
 - The page's own code and the master's firmware: no licence chosen yet.
