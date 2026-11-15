@@ -2,7 +2,7 @@
 
 The page at **https://retiallc.github.io/uas-flasher/** flashes the three boards of a UAS detector unit from a browser, over USB, with Web Serial. It is made in the manner of scriptkitty.sh.
 
-> **State, 15 Nov 2026: one real master flashed, from a terminal.** The page's own code took a new master board from its maker's firmware to master 0.11.0, and then updated it again, each file compared by the chip. Both runs were started from a terminal with `tools/board_run.mjs`. Nobody has yet flashed a board from a browser with the page, and no sensor has met it. The notice at the top of the page says so.
+> **State, 16 Nov 2026: one real master flashed, from a terminal and from Chrome.** The page's own code took a new master board from its maker's firmware to master 0.11.0 and updated it again, from a terminal with `tools/board_run.mjs`. The maintainer then flashed the same board from Chrome on the live page, which ended with DONE; the master's hello was read afterwards and named 0.11.0. No sensor has met the page yet.
 
 Add `?demo` to the address to try the page with pretend boards and nothing plugged in.
 
@@ -174,13 +174,12 @@ What the page does about the mute restart: on a master whose chip is revision 1.
 Checked on 15 Nov 2026:
 
 - `sh tests/run.sh` passes: 13 tests of the build step and 32 of the page's code (two of the 32 need `UAS_TREE`). The pretend boards behave as the real master did.
-- On a real master board: the two runs of the table above.
+- On a real master board: the two runs of the table above, and on 16 Nov one flash from Chrome on the live page by the maintainer. It ended with DONE and the master's hello named 0.11.0 afterwards. The sheet's log of that run was not kept.
 - In a browser, with pretend boards: a master flashed with the release's real files, a new master through the question about USB, a sensor through a pretend master, a sensor through its own socket, the question about a wrong board, and the layout at 375 px.
 - `north.js` took the firmware repository's own master through a whole sensor flash against its simulated sensor and pretend ROM loader.
 
 Not checked:
 
-- **A browser on a real board.** The code that ran on the board is the page's, but the port was a named device, not one a browser handed over. Whether Chrome gives a restarted board back without asking again is still to be seen; the page asks the person to choose the board again if it does not.
 - **Any sensor.** No revision 1.0 chip has met the page's code.
 - How a real sensor answers on its own USB port while it is linked to a master.
 
