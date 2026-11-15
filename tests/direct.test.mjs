@@ -33,8 +33,11 @@ test("the master: its own command into the loader, three files, the watchdog out
   assert.equal(out.now.version, entry.version);
   assert.equal(out.settled, true);
   assert.ok(board.flash.subarray(0x9000, 0xf000).every((b) => b === 0x5a), "the settings partition was left alone");
-  assert.equal(board.signalChanges, 0, "DTR and RTS were never changed");
   for (const mark of ["fw-to-loader", "wdt-off", "swd-autofeed", "wdt-reset"]) assert.ok(board.log.includes(mark), mark);
+  // As on the real board: mute after the watchdog's restart, so one restart through RTS, and nothing else on those lines.
+  assert.equal(board.signalChanges, 2, "DTR and RTS were changed for the one restart through RTS only");
+  assert.deepEqual(board.log.slice(board.log.indexOf("wdt-reset") + 1), ["dtr-rts", "dtr-rts", "usb-reset"]);
+  assert.equal(out.rtsRestart, true);
   assert.deepEqual(r.seen.steps.filter((s) => s[1] === "done").map((s) => s[0]), ["ask", "loader", "chip", "write", "restart", "hello"]);
   await out.io.close();
   board.stop();
@@ -182,6 +185,55 @@ test("two boards on USB at once: the one that restarted is found again, the othe
   board.stop(); other.stop();
 });
 
+test("a new master, running its maker's firmware: asked first, then restarted over USB, written, and its settings partition blanked", async () => {
+  const serial = unit();
+  const board = serial.add(new sim.PretendBoard({ kind: "master", image: null, foreign: true }));
+  board.flash.fill(0x5a, 0x9000, 0xf000);                       // the maker's own data lies where our settings will be
+  const { board: entry, parts } = loadBoard(release, "master");
+  const r = recorder({ "usb-reset": true });
+  const out = await flashDirect({ serial, esptool, port: await serial.requestPort(), role: "master", board: entry, parts, hooks: r.hooks });
+  holds(board, parts);
+  assert.deepEqual(r.seen.confirms.map((c) => c.kind), ["usb-reset"]);
+  assert.equal(out.usbReset, true);
+  assert.equal(out.blanked, true);
+  assert.ok(board.flash.subarray(0x9000, 0xf000).every((b) => b === 0xff), "what the maker kept there is gone");
+  assert.ok(board.log.includes("usb-reset-to-loader"));
+  assert.ok(!board.log.includes("fw-to-loader"), "its firmware took no command of ours");
+  assert.equal(out.was, null);
+  assert.equal(out.now.version, entry.version);
+  assert.equal(out.settled, true);
+  await out.io.close();
+  board.stop();
+});
+
+test("a new master, and the person says no to the restart over USB: nothing is done to it", async () => {
+  const serial = unit();
+  const board = serial.add(new sim.PretendBoard({ kind: "master", image: null, foreign: true }));
+  const before = board.flash.slice(0, 0x20000);
+  const { board: entry, parts } = loadBoard(release, "master");
+  const r = recorder({ "usb-reset": false });
+  await assert.rejects(
+    flashDirect({ serial, esptool, port: await serial.requestPort(), role: "master", board: entry, parts, hooks: r.hooks }),
+    (e) => e instanceof FlashError && e.at === "loader" && e.left === "unchanged");
+  assert.equal(board.signalChanges, 0);
+  assert.ok(sameBytes(board.flash.subarray(0, 0x20000), before));
+  assert.equal(board.mode, "foreign");
+  board.stop();
+});
+
+test("a blank sensor board gets a blank settings partition too", async () => {
+  const serial = unit();
+  const board = serial.add(new sim.PretendBoard({ kind: "xiao", image: null, inLoader: true }));
+  board.flash.fill(0x33, 0x9000, 0xf000);
+  const { board: entry, parts } = loadBoard(release, "rid");
+  const out = await flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rid", board: entry, parts, hooks: recorder().hooks });
+  assert.equal(out.blanked, true);
+  assert.ok(board.flash.subarray(0x9000, 0xf000).every((b) => b === 0xff));
+  assert.equal(board.signalChanges, 0);
+  await out.io.close();
+  board.stop();
+});
+
 test("a board that answers nothing at all ends with the BOOT button's instructions, and no reset was tried", async () => {
   const serial = unit();
   const board = serial.add(new sim.PretendBoard({ kind: "xiao", image: null }));      // an empty flash: the ROM has nothing to start
@@ -190,5 +242,19 @@ test("a board that answers nothing at all ends with the BOOT button's instructio
     flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rid", board: entry, parts, hooks: recorder().hooks }),
     (e) => e instanceof FlashError && e.at === "loader" && e.hint === "boot-button-silent" && e.left === "unchanged");
   assert.equal(board.signalChanges, 0);
+  board.stop();
+});
+
+test("a restart over USB is never offered for a sensor, whatever it does", async () => {
+  const serial = unit();
+  const board = serial.add(new sim.PretendBoard({ kind: "xiao", image: null, foreign: true }));
+  const { board: entry, parts } = loadBoard(release, "rf" in release.boards ? "rf" : "rid");
+  const r = recorder({ "usb-reset": true });                     // even a person who would say yes is not asked
+  await assert.rejects(
+    flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rid", board: entry, parts, hooks: r.hooks }),
+    (e) => e instanceof FlashError && e.at === "loader");
+  assert.deepEqual(r.seen.confirms, []);
+  assert.equal(board.signalChanges, 0);
+  assert.ok(!board.log.includes("wedged"));
   board.stop();
 });

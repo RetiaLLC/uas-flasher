@@ -102,14 +102,26 @@ export async function watchdogReset(loader) {
   await loader.writeReg(LP_WDT_WPROTECT, 0);
 }
 
-/** Meets the loader on a port that is in it. Returns the esptool-js loader with its stub running. */
-async function meetLoader(guard, esptool, H, attempts) {
+/**
+ * Meets the loader. Returns the esptool-js loader with its stub running.
+ *
+ * mode "no_reset": the port is in its loader already, and DTR and RTS are held back.
+ * mode "usb_reset": the board is first restarted into its loader through DTR and
+ * RTS, the way Espressif's tools do it. Only for a master's board, and only at
+ * the person's word: see the guard in port.js for what it does to a sensor's chip.
+ */
+async function meetLoader(guard, esptool, H, attempts, mode = "no_reset") {
   const transport = new esptool.Transport(guard, false);
   // The rate stays at the ROM's: on USB it means nothing, and a change that
   // fails makes esptool-js try a reset through DTR and RTS.
   const loader = new esptool.ESPLoader({ transport, baudrate: 115200, romBaudrate: 115200, terminal: terminal(H), debugLogging: false });
   try {
-    await loader.detectChip("no_reset", attempts);
+    guard.allowSignals = mode === "usb_reset";
+    try {
+      await loader.detectChip(mode, attempts);
+    } finally {
+      guard.allowSignals = false;
+    }
     if (!loader.chip || loader.chip.CHIP_NAME !== CHIP_NAME) {
       throw new FlashError("chip", `This is an ${loader.chip ? loader.chip.CHIP_NAME : "unknown chip"}, and every board of the unit is an ${CHIP_NAME}. Nothing was written.`);
     }
@@ -246,6 +258,32 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
       await again();
       session = await attempt(lines.second);
     }
+    if (!session && role === "master") {
+      // Nothing took the page's word. A new master runs its maker's firmware,
+      // which knows none of our commands. A master's board can be restarted
+      // into its loader over USB; a sensor's chip hangs when that is done to it,
+      // so the person is asked, and only for the master.
+      const go = await H.confirm({ kind: "usb-reset", heard: who.heard > 0 });
+      if (go) {
+        H.log("restarting the board into its loader through DTR and RTS, at the person's word");
+        const before = await serial.getPorts();
+        const meet = async (mode) => {
+          try {
+            return await meetLoader(guard, esptool, H, 3, mode);
+          } catch (e) {
+            if (e instanceof FlashError) throw e;
+            H.log("no loader answered: " + (e && e.message ? e.message : e));
+            return null;
+          }
+        };
+        session = await meet("usb_reset");
+        if (!session && !(await serial.getPorts()).includes(guard.port)) {
+          await comeBack(before, "the restart into its loader");
+          session = await meet("no_reset");      // it is in its loader now: no second reset
+        }
+        out.usbReset = true;
+      }
+    }
     if (!session) {
       throw new FlashError("loader", "The board did not enter its loader.", { hint: who.role ? "boot-button" : "boot-button-silent" });
     }
@@ -268,8 +306,10 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
     }
     out.flashBytes = flashBytes;
     let installed = null;
+    let headRead = false;
     try {
       installed = readAppHead(await loader.readFlash(board.app_slot.offset, APP_HEAD_BYTES));
+      headRead = true;
     } catch (e) {
       H.log("the application's header could not be read back: " + (e && e.message ? e.message : e));
     }
@@ -300,7 +340,13 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
     // 4. Write, and compare each file with the loader's MD5 of the flash.
     H.step("write", "run");
     const files = parts.map((p) => ({ data: p.data, address: p.offset, kind: p.kind }));
-    if (wipe && board.nvs) {
+    // A board that did not run this firmware before has nothing of it to keep,
+    // and what lies where its settings will be is another firmware's: a new
+    // master's maker keeps other things there. It starts with a blank partition.
+    const fresh = headRead && who.role !== role && installedRole !== role;
+    out.blanked = !!((wipe || fresh) && board.nvs);
+    if (out.blanked) {
+      if (fresh && !wipe) H.log("this board did not run this firmware before: its settings partition is blanked");
       files.splice(files.length - 1, 0, { data: new Uint8Array(board.nvs.size).fill(0xff), address: board.nvs.offset, kind: "settings" });
     }
     const total = files.reduce((n, f) => n + f.data.length, 0);
@@ -323,7 +369,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
       throw new FlashError("write", "The write did not finish: " + (e && e.message ? e.message : e), { left: "loader", hint: "again" });
     }
     H.progress(total, total, "done");
-    H.step("write", "done", `${files.length} files, ${total} bytes, each compared`);
+    H.step("write", "done", `${parts.length} files, ${parts.reduce((n, p) => n + p.data.length, 0)} bytes, each compared` + (out.blanked ? "; settings partition blanked" : ""));
 
     // 5. Out of the loader.
     H.step("restart", "run");
@@ -351,9 +397,45 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
     io = new LineIO(guard);
     await io.open();
     let now = { role: null };
-    for (let i = 0; i < 4 && !now.role; i++) {
-      now = await identify(io, { id: id++, settleMs: 700, answerMs: 1500 });
-      if (!now.role) await sleep(500);
+    const hear = async (tries) => {
+      for (let i = 0; i < tries && !now.role; i++) {
+        now = await identify(io, { id: id++, settleMs: 700, answerMs: 1500 });
+        if (!now.role && i + 1 < tries) await sleep(500);
+      }
+    };
+    await hear(2);
+    if (!now.role && role === "master" && (major > 1 || minor >= 1)) {
+      // Measured on a revision 1.2 master, 15 Nov 2026: after the loader's
+      // watchdog restart the firmware runs and takes commands, but nothing it
+      // sends reaches USB, and its own restart does not mend that. A restart
+      // through RTS does: the one a flash from the firmware's build tools ends
+      // with. The chip has said which revision it is; a revision 1.0 chip,
+      // which hangs on this, never gets here.
+      H.log("the firmware does not speak after the watchdog's restart: one more restart, through RTS (the chip is revision " + out.rev + ")");
+      const beforeRts = await serial.getPorts();
+      guard.allowSignals = true;
+      try {
+        await guard.setSignals({ dataTerminalReady: false, requestToSend: true });
+        await sleep(150);
+        await guard.setSignals({ dataTerminalReady: false, requestToSend: false });
+        out.rtsRestart = true;
+      } catch (e) {
+        H.log("the restart through RTS could not be sent: " + (e && e.message ? e.message : e));
+      } finally {
+        guard.allowSignals = false;
+      }
+      if (await io.waitLost(1200)) {
+        await io.release();
+        const again = await waitForReturn(serial, guard.port, beforeRts, 9000);
+        if (again) {
+          guard.swap(again);
+          io = new LineIO(guard);
+          await io.open();
+        }
+      }
+      await hear(4);
+    } else {
+      await hear(2);
     }
     out.io = io;          // left open for the page, which may go on talking to a master
     out.guard = guard;

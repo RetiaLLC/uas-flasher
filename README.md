@@ -2,7 +2,7 @@
 
 The page at **https://retiallc.github.io/uas-flasher/** flashes the three boards of a UAS detector unit from a browser, over USB, with Web Serial. It is made in the manner of scriptkitty.sh.
 
-> **State, 15 Nov 2026: not yet tried on a real board.** The page and its code have been run against pretend boards only. The notice at the top of the page says so, and comes out once a real board has been flashed from it.
+> **State, 15 Nov 2026: one real master flashed, from a terminal.** The page's own code took a new master board from its maker's firmware to master 0.11.0, and then updated it again, each file compared by the chip. Both runs were started from a terminal with `tools/board_run.mjs`. Nobody has yet flashed a board from a browser with the page, and no sensor has met it. The notice at the top of the page says so.
 
 Add `?demo` to the address to try the page with pretend boards and nothing plugged in.
 
@@ -30,6 +30,8 @@ Add `?demo` to the address to try the page with pretend boards and nothing plugg
 | `site/catalog.json`, `site/firmware/` | Written by the build step below. The page reads nothing else |
 | `scripts/build_catalog.py` | Fetches releases and turns them into the catalog and the served files |
 | `scripts/serve.py` | A local server with caching off, for a look at the page |
+| `tools/` | The page's code against a real board, from a terminal: see below |
+| `releases.config.json` | The name each release goes by on the page (Alpha, Beta), and a line about where it stands |
 | `tests/` | `sh tests/run.sh` |
 | `.github/workflows/pages.yml` | On every push to `main`: runs the tests, then publishes `site/` |
 
@@ -46,6 +48,23 @@ git add site && git commit && git push
 `fetch` skips drafts unless given `--drafts`; the page marks a draft as one and asks for a tick before it flashes it. `build` checks every file, refuses a release that fails a check, and writes `site/firmware/<tag>/` and `site/catalog.json`. The push publishes it.
 
 The catalog carries what the page needs and no more. A release's own notes are written for the team that makes the firmware and stay out unless `build` is given `--with-notes`.
+
+### Alpha and Beta
+
+`releases.config.json` gives a release the name it goes by on the page. A release that is not listed there is shown by its own state on GitHub: verified, untested or draft.
+
+```json
+{
+  "releases": {
+    "release-2026-11-15": { "channel": "alpha", "label": "Alpha", "note": "Validated on a unit through the night of 14 to 15 Nov 2026." }
+  },
+  "pending": [ { "channel": "beta", "label": "Beta", "note": "The current build. Its files are not in a release yet." } ]
+}
+```
+
+- **Alpha** is the release that has been through a validation. It is offered first and flashed without a tick.
+- **Beta** is the current build. The page asks for a tick before it flashes it.
+- A name under `pending` is listed as waiting until a release takes its channel.
 
 To see what one directory of files says of itself:
 
@@ -89,6 +108,18 @@ Then open `http://localhost:8791/`, or `http://localhost:8791/?demo` for pretend
 
 On a Mac a program needs permission to read `~/Documents`, and a server started by a tool that cannot answer the system's question hangs before it listens. `sh scripts/preview_copy.sh /tmp/uas-site` copies `site/` to a place that needs no permission.
 
+## On a real board, from a terminal
+
+A browser asks a person to pick the port. To run the same code with the device named, and to see every step:
+
+```
+PYTHON=/path/to/a/python/with/pyserial node tools/board_run.mjs look  --device /dev/cu.usbmodem1101
+PYTHON=... node tools/board_run.mjs flash --device /dev/cu.usbmodem1101 --role master
+PYTHON=... node tools/board_run.mjs flash --device /dev/cu.usbmodem1101 --role master --usb-reset
+```
+
+`look` writes nothing. `flash` runs `site/js/direct.js` with esptool-js from `site/vendor/`, as the browser does, and writes the first release in the catalog. `--usb-reset` answers yes when the page asks whether to restart a new master over USB; `--yes other-board,other-flash` answers its other questions. Node has no serial ports, so `tools/serial_bridge.py` opens the device and `tools/node_serial.mjs` dresses it as Web Serial, with a board that leaves USB and comes back as a new port.
+
 ## Tests
 
 ```
@@ -113,29 +144,45 @@ UAS_TREE=/path/to/that/tree sh tests/run.sh
 
 ## How the page treats a board
 
-- **It never changes DTR or RTS.** Both sensors are revision 1.0 ESP32-C5 chips, and one that is reset through those lines hangs in its ROM until its power is cut (measured on the project's benches, 13 and 14 Nov 2026). esptool-js falls back to that reset when a change of baud rate fails. The page keeps the rate at the ROM's, which costs nothing on USB, and `GuardedPort` holds every change of the two lines back, whoever asks for it.
+- **It holds DTR and RTS back, except in two places on a master.** Both sensors are revision 1.0 ESP32-C5 chips, and one that is reset through those lines hangs in its ROM until its power is cut (measured on the project's benches, 13 and 14 Nov 2026). esptool-js falls back to that reset when a change of baud rate fails. The page keeps the rate at the ROM's, which costs nothing on USB, and `GuardedPort` holds every change of the two lines back unless the code has opened the guard. It opens it twice, both only when the board chosen is the master: for a restart into the loader that the person has said yes to, and for one restart at the end on a chip that has said it is revision 1.1 or later.
 - **Into the loader by the firmware's own command.** The master: `{"cmd":"reboot","id":N,"mode":"download"}`. The Remote ID sensor: the plain line `{"cmd":"boot","id":N,"mode":"download"}`, then the link's framed form. The RF sensor: `BOOTLOADER` on its console. A board that says nothing is tried as it is, since it may sit in its loader already.
+- **A new master is asked about.** It runs its maker's firmware, which knows none of these commands. The page asks whether to restart it into its loader over USB, says that a sensor's chip hangs when that is done to it, and names the other way: hold BOOT, press RESET. A sensor is never offered the restart over USB.
 - **It asks before it writes onto another board than the one chosen.** A board names itself by its hello, or by the application in its flash. The master's board is also told from a sensor's by its flash size.
 - **Watchdogs off while it writes, and the watchdog to leave.** Both are register writes to the chip's LP watchdog at `0x600B1C00` (read in ESP-IDF 5.5.1, `soc/esp32c5/register/soc/lp_wdt_reg.h`). The reset clears the "start in the loader" latch, which an ordinary reset does not.
 - **Every file is compared.** The page checks each file's SHA-256 against the catalog before it sends a byte, and after each write it compares the loader's MD5 of the flash with the file's.
-- **An update leaves the settings alone.** It writes three files at their own places. The box on the master's card also blanks the settings partition.
+- **An update leaves the settings alone. A first flash does not.** An update writes three files at their own places. A board that did not run this firmware before gets a blank settings partition as well: what lies there is another firmware's. The box on the master's card blanks it on an update too.
 - **A sensor through the master** carries the master's own warning: that version of its flasher writes over the sensor's only firmware.
+
+## What the first real board showed
+
+Measured on 15 Nov 2026 on a new Waveshare ESP32-C5-Touch-LCD-2.8 (ESP32-C5 revision 1.2, 32 MB of flash) on a Mac's USB, with `tools/board_run.mjs`. The board's whole flash was read out with Espressif's esptool first.
+
+| What | Result |
+| --- | --- |
+| The board as its maker ships it | It runs the maker's firmware, with its application at `0x20000` and other data where the master's settings go. It logs a line now and then and takes none of the page's commands |
+| Restart into the loader over USB, by esptool-js | Worked: one reset sequence, about 8 s until the loader answered. The board stayed on USB |
+| The stub, the chip's revision, MAC and flash size | Read as Espressif's esptool reads them: revision 1.2, 32 MB |
+| Bootloader, partition table, blank settings, application | Written; each MD5 from the chip equal to the file's. 982 912 bytes of application in 4.4 s |
+| Restart by the LP watchdog | The board left USB for about 270 ms and came back as a new port |
+| **The firmware after that restart** | **It runs and takes commands, and nothing it sends arrives on USB.** Its own `reboot` does not mend that. A restart through RTS does, and the master then says hello: panel, touch, sound and Bluetooth all up |
+| An update of the same board, by its own `reboot` `download` | Worked in 18 s from start to hello. The board stayed on USB when it entered the loader |
+
+What the page does about the mute restart: on a master whose chip is revision 1.1 or later it follows the watchdog's restart with one through RTS, if no hello came. The firmware's owner knows of it.
 
 ## What has been checked, and what has not
 
-Checked on 15 Nov 2026, on a Mac, with no board:
+Checked on 15 Nov 2026:
 
-- `sh tests/run.sh` passes: 12 tests of the build step and 28 of the page's code (two of the 28 need `UAS_TREE`).
-- In a browser, with pretend boards: a master flashed with the release's real files, a sensor through a pretend master, a sensor through its own socket, the question about a wrong board, and the layout at 375 px.
+- `sh tests/run.sh` passes: 13 tests of the build step and 32 of the page's code (two of the 32 need `UAS_TREE`). The pretend boards behave as the real master did.
+- On a real master board: the two runs of the table above.
+- In a browser, with pretend boards: a master flashed with the release's real files, a new master through the question about USB, a sensor through a pretend master, a sensor through its own socket, the question about a wrong board, and the layout at 375 px.
 - `north.js` took the firmware repository's own master through a whole sensor flash against its simulated sensor and pretend ROM loader.
 
 Not checked:
 
-- **Anything on a board.** No ESP32-C5 has met esptool-js here. The pretend boards answer the way the code asks; they are not the chip.
-- Web Serial itself: whether a board that restarts comes back as a new port without the browser asking again. The code handles both, and asks the person to choose the board again if neither happens.
+- **A browser on a real board.** The code that ran on the board is the page's, but the port was a named device, not one a browser handed over. Whether Chrome gives a restarted board back without asking again is still to be seen; the page asks the person to choose the board again if it does not.
+- **Any sensor.** No revision 1.0 chip has met the page's code.
 - How a real sensor answers on its own USB port while it is linked to a master.
-
-The first board step: a master, read through the page, flashed with the release it already runs, its hello compared before and after.
 
 ## Licences of what is served
 

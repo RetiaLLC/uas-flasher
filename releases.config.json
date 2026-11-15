@@ -1,0 +1,17 @@
+{
+  "comment": "How the page presents each release of the firmware: the name it goes by here, and a line about where it stands. A release that is not listed is shown by its own state on GitHub (verified, untested or draft). `pending` names what the page will list once its files are in a release.",
+  "releases": {
+    "release-2026-11-15": {
+      "channel": "alpha",
+      "label": "Alpha",
+      "note": "Validated on a unit through the night of 14 to 15 Nov 2026."
+    }
+  },
+  "pending": [
+    {
+      "channel": "beta",
+      "label": "Beta",
+      "note": "The current build. Its files are not in a release yet."
+    }
+  ]
+}

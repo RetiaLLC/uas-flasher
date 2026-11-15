@@ -21,6 +21,14 @@
 //     power is cycled (measured on the benches, 13 and 14 Nov 2026). The page
 //     must never do that, and the tests check that it never does.
 //   - its LP watchdog, written the way the page writes it, restarts the chip.
+//   - a master's board (revision 1.2) behaves as one did on 15 Nov 2026, the
+//     first real board the page's code met: a restart through DTR and RTS
+//     works and leaves it on USB; so does the firmware's own restart into the
+//     loader; the watchdog's restart takes it off USB for a moment, and after
+//     it the firmware runs and takes commands but nothing it sends arrives,
+//     until a restart through RTS.
+//   - a new master runs its maker's firmware, which logs a line now and then
+//     and knows none of our commands.
 
 import { crc32, hex8, md5 as md5hex, concat, framed, unframed } from "../js/bytes.js";
 import { readAppHead } from "../js/image.js";
@@ -244,10 +252,12 @@ export class PretendSerial extends EventTarget {
  *   keepsUsb     stay on USB through a restart asked for by firmware
  *   inLoader     start in the ROM loader, as with the BOOT button held
  *   deafToPlain  a sensor that ignores the plain loader command and takes only the link's framed one
+ *   foreign      a board that runs another firmware until ours is written: a new master
+ *   mutes        a master whose firmware sends nothing after the watchdog's restart (as measured); false for one that does
  */
 export class PretendBoard {
-  constructor({ name, kind = "xiao", image = null, mac = null, pace = 0, awayMs = 60, sameObject = false, keepsUsb = false,
-                inLoader = false, deafToPlain = false, git = "abc1234" } = {}) {
+  constructor({ name, kind = "xiao", image = null, mac = null, pace = 0, awayMs = 60, sameObject = false, keepsUsb = kind === "master",
+                inLoader = false, deafToPlain = false, git = "abc1234", foreign = false, mutes = kind === "master" } = {}) {
     this.name = name ?? kind;
     this.kind = kind;
     this.flashBytes = kind === "master" ? 32 * 1024 * 1024 : 8 * 1024 * 1024;
@@ -261,6 +271,12 @@ export class PretendBoard {
     this.keepsUsb = keepsUsb;
     this.deafToPlain = deafToPlain;
     this.git = git;
+    this.foreign = foreign;      // with no firmware of ours in its flash, it runs its maker's
+    this.mutes = mutes;          // after the watchdog's restart its firmware sends nothing, until a restart through RTS
+    this.mute = false;
+    this.dtr = true;             // as the lines stand on an open port
+    this.rts = true;
+    this.strapLow = false;
     this.serial = null;
     this.granted = false;
     this.port = new PretendPort(this);
@@ -320,7 +336,15 @@ export class PretendBoard {
     }
     const head = readAppHead(this.flash.subarray(APP_OFFSET, APP_OFFSET + 0x120));
     this.app = head && head.chipId === CHIP_ESP32C5 ? { ...head, role: PROJECT_ROLE[head.project] ?? null } : null;
-    if (!this.app) { this.mode = "blank"; return; }     // nothing to start: the ROM loops and USB says nothing useful
+    if (!this.app) {
+      if (this.foreign) {
+        this.mode = "foreign";                           // its maker's firmware: a log line now and then, no command of ours
+        this._every(1500, () => this._say(`I (${Date.now() - this.bootMs}) wifi_manager: Retrying STA connection after backoff\r\n`));
+      } else {
+        this.mode = "blank";                             // nothing to start: the ROM loops and USB says nothing useful
+      }
+      return;
+    }
     this.mode = "app";
     if (this.app.role === "master") this._every(1000, () => this._masterStatus());
     if (this.app.role === "rid") this._every(1000, () => this._record({ event: "status", radio: "run", heap: 96000 }));
@@ -331,6 +355,8 @@ export class PretendBoard {
   _systemReset(why) {
     this.log.push(why);
     this.latch = false;
+    if (why === "wdt-reset" && this.mutes) this.mute = true;
+    if (why === "power-cycle") this.mute = false;
     this._usbCycle(() => this._start("boot"));
   }
   /** Firmware restarts the chip into its ROM loader. */
@@ -363,26 +389,33 @@ export class PretendBoard {
   /** A person unplugs every supply and plugs it in again. */
   powerCycle() { this._systemReset("power-cycle"); }
 
-  /** DTR and RTS, as the USB-Serial/JTAG controller reads them. */
+  /**
+   * DTR and RTS, as the USB-Serial/JTAG controller reads them: DTR high with
+   * RTS low pulls the boot pin; DTR low with RTS high holds the chip in reset;
+   * letting RTS go starts it, in its loader if the boot pin was pulled.
+   */
   _signals(signals) {
     this.signalChanges++;
     this.log.push("dtr-rts");
-    const was = { dtr: this.dtr ?? false, rts: this.rts ?? false };
+    const was = { dtr: this.dtr, rts: this.rts };
     if (signals.dataTerminalReady !== undefined) this.dtr = !!signals.dataTerminalReady;
     if (signals.requestToSend !== undefined) this.rts = !!signals.requestToSend;
-    if (this.rts && !was.rts) this.bootSel = was.dtr;            // reset asserted: the boot pin as DTR had it
-    if (!this.rts && was.rts && this.mode !== "off") {           // reset released
+    const inReset = (x) => !x.dtr && x.rts;
+    if (this.dtr && !this.rts) this.strapLow = true;
+    if (inReset(this) && !inReset(was)) this.pendingBoot = this.strapLow ? "loader" : "boot";
+    if (!this.dtr && !this.rts) this.strapLow = false;
+    if (inReset(was) && !inReset(this) && this.mode !== "off") {
+      const how = this.pendingBoot ?? "boot";
       if (this.rev.major === 1 && this.rev.minor === 0) {
         // Measured on revision 1.0: the ROM hangs with USB dead until a whole-chip reset.
         this.log.push("wedged");
         this._clearTimers();
         this.mode = "wedged";
-      } else if (this.bootSel) {
-        this.log.push("usb-reset-to-loader");
-        this._usbCycle(() => this._start("loader"));
       } else {
-        this.log.push("usb-reset");
-        this._usbCycle(() => this._start("boot"));              // the latch outlives it, as measured on the master
+        // Measured on revision 1.2: it restarts and stays on USB. The loader latch outlives it.
+        this.log.push(how === "loader" ? "usb-reset-to-loader" : "usb-reset");
+        this.mute = false;
+        this._start(how);
       }
     }
   }
@@ -391,6 +424,8 @@ export class PretendBoard {
   _say(text) { this._send(enc.encode(text)); }
   _send(bytes) { if (this.port) this.port._deliver(bytes); }
   _opened() {
+    this.dtr = this.rts = true;            // an open port has both lines up, and that is no reset
+    this.strapLow = false;
     if (this.mode === "app" && this.app.role === "master") this._later(150, () => this._masterHello());
   }
   _rx(bytes) {
@@ -434,6 +469,7 @@ export class PretendBoard {
 
   // --- firmware -----------------------------------------------------------
   _record(members, { framedOut = false } = {}) {
+    if (this.mute) return;                 // it runs, it takes commands, and nothing it sends arrives
     const text = JSON.stringify({ schema: 1, ...members, seq: this.seq++, uptime_ms: Date.now() - this.bootMs });
     this._say((framedOut ? framed(text) : text) + "\n");
   }

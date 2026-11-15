@@ -1,11 +1,11 @@
 {
  "schema": 1,
- "generated": "2026-11-15T21:44:47Z",
+ "generated": "2026-11-15T22:31:18Z",
  "releases": [
   {
    "tag": "release-2026-11-15",
    "date": "2026-11-15",
-   "channel": "draft",
+   "channel": "alpha",
    "boards": {
     "master": {
      "project": "uas_detector_master",
@@ -94,7 +94,16 @@
    },
    "missing": [
     "rf"
-   ]
+   ],
+   "label": "Alpha",
+   "note": "Validated on a unit through the night of 14 to 15 Nov 2026."
+  }
+ ],
+ "pending": [
+  {
+   "channel": "beta",
+   "label": "Beta",
+   "note": "The current build. Its files are not in a release yet."
   }
  ]
 }

@@ -17,9 +17,12 @@ export async function loadCatalog(url = "catalog.json") {
   return catalog;
 }
 
-/** The release a visitor is offered first: the newest verified one, else the first listed. */
+/** Channels that have been through a validation: flashed without a tick. */
+export const VALIDATED = new Set(["alpha", "verified"]);
+
+/** The release a visitor is offered first: the newest validated one, else the first listed. */
 export function firstRelease(catalog) {
-  return catalog.releases.find((r) => r.channel === "verified") ?? catalog.releases[0] ?? null;
+  return catalog.releases.find((r) => VALIDATED.has(r.channel)) ?? catalog.releases[0] ?? null;
 }
 
 export class FileError extends Error {}

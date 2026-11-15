@@ -141,18 +141,43 @@ class BuildCatalog(unittest.TestCase):
             os.rename(os.path.join(r.dir, name), os.path.join(releases, "v1", name))
         with open(os.path.join(releases, "v1", "release.meta.json"), "w") as f:
             json.dump({"tag": "v1", "title": "One", "date": "2026-11-15", "channel": "verified", "body": "notes"}, f)
-        self.assertEqual(bc.main(["build", "--releases", releases, "--out", site]), 0)
+        none = os.path.join(root, "no-config.json")
+        self.assertEqual(bc.main(["build", "--releases", releases, "--out", site, "--config", none]), 0)
         with open(os.path.join(site, "catalog.json")) as f:
             cat = json.load(f)
         rel = cat["releases"][0]
         self.assertEqual((cat["schema"], rel["tag"], rel["channel"], rel["missing"]), (1, "v1", "verified", ["rid", "rf"]))
         self.assertNotIn("notes", rel, "the team's notes stay out of a catalog that anyone can read")
-        self.assertEqual(bc.main(["build", "--releases", releases, "--out", site, "--with-notes"]), 0)
-        with open(os.path.join(site, "catalog.json")) as f:
-            self.assertEqual(json.load(f)["releases"][0]["notes"], "notes")
         for p in rel["boards"]["master"]["parts"]:
             with open(os.path.join(site, p["file"]), "rb") as f:
                 self.assertEqual(hashlib.sha256(f.read()).hexdigest(), p["sha256"])
+        self.assertEqual(bc.main(["build", "--releases", releases, "--out", site, "--config", none, "--with-notes"]), 0)
+        with open(os.path.join(site, "catalog.json")) as f:
+            self.assertEqual(json.load(f)["releases"][0]["notes"], "notes")
+
+    def test_the_publisher_names_a_release_alpha_or_beta(self):
+        root = tempfile.mkdtemp(prefix="uas_flasher_build_")
+        self.addCleanup(lambda: __import__("shutil").rmtree(root, ignore_errors=True))
+        releases, site = os.path.join(root, "releases"), os.path.join(root, "site")
+        os.makedirs(site)
+        for tag, version, state in (("r1", "0.11.0", "draft"), ("r2", "0.12.0", "draft")):
+            os.makedirs(os.path.join(releases, tag))
+            r = Release(self).board("master", "uas_detector_master", version)
+            for name in os.listdir(r.dir):
+                os.rename(os.path.join(r.dir, name), os.path.join(releases, tag, name))
+            with open(os.path.join(releases, tag, "release.meta.json"), "w") as f:
+                json.dump({"tag": tag, "title": tag, "date": "2026-11-15", "channel": state, "body": ""}, f)
+        config = os.path.join(root, "releases.config.json")
+        with open(config, "w") as f:
+            json.dump({"releases": {"r1": {"channel": "alpha", "label": "Alpha", "note": "Validated."}, "r2": {"channel": "beta", "label": "Beta"}}}, f)
+        self.assertEqual(bc.main(["build", "--releases", releases, "--out", site, "--config", config]), 0)
+        with open(os.path.join(site, "catalog.json")) as f:
+            got = json.load(f)["releases"]
+        self.assertEqual([(r["tag"], r["channel"], r.get("label"), r.get("note")) for r in got],
+                         [("r1", "alpha", "Alpha", "Validated."), ("r2", "beta", "Beta", None)])
+        with open(config, "w") as f:
+            json.dump({"releases": {"r1": {"channel": "gamma"}}}, f)
+        self.assertEqual(bc.main(["build", "--releases", releases, "--out", site, "--config", config]), 1)
 
 
 if __name__ == "__main__":

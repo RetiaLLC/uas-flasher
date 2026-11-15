@@ -291,8 +291,27 @@ def cmd_fetch(args):
     return 0
 
 
+CHANNELS = ("alpha", "beta", "verified", "untested", "draft")
+
+
+def read_config(path):
+    """releases.config.json: how the page presents each release. {} if there is none."""
+    if not path or not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        whole = json.load(f)
+    listed = whole.get("releases") or {}
+    for tag, how in listed.items():
+        if how.get("channel") not in CHANNELS:
+            raise Refused("%s: %s gives the channel %r, and the page knows %s" % (path, tag, how.get("channel"), ", ".join(CHANNELS)))
+    listed = dict(listed)
+    listed[None] = whole.get("pending") or []      # what is named and not there yet
+    return listed
+
+
 def cmd_build(args):
     out_fw = os.path.join(args.out, "firmware")
+    config = read_config(args.config)
     releases, failed = [], False
     for tag in sorted(os.listdir(args.releases)):
         directory = os.path.join(args.releases, tag)
@@ -319,18 +338,25 @@ def cmd_build(args):
                 p["file"] = "firmware/%s/%s" % (meta["tag"], p["file"])
         entry = {"tag": meta["tag"], "date": meta["date"], "channel": meta["channel"], "boards": boards,
                  "missing": [r for r in ROLES if r not in boards]}
+        how = config.get(meta["tag"])
+        if how:
+            # The publisher's own word on how this release is presented, in place of its state on GitHub.
+            entry["channel"] = how["channel"]
+            for key in ("label", "note"):
+                if how.get(key):
+                    entry[key] = how[key]
         if args.with_notes:
             # The release's own title, notes and commit are written for the team that makes the firmware.
             entry.update({"title": meta["title"], "commit": meta.get("commit"), "notes": meta.get("body", "")})
         releases.append(entry)
-        print("%s (%s): %s" % (meta["tag"], meta["channel"], ", ".join(
+        print("%s (%s): %s" % (meta["tag"], entry["channel"], ", ".join(
             "%s %s" % (role, b["version"]) for role, b in boards.items())))
         for n in notes:
             print("  note: %s" % n)
     if failed and not args.keep_going:
         print("nothing was written: a refused release stops the build (--keep-going leaves it out instead)")
         return 1
-    order = {"verified": 0, "untested": 1, "draft": 2}
+    order = {"alpha": 0, "verified": 0, "beta": 1, "untested": 1, "draft": 2}
     releases.sort(key=lambda r: r["date"], reverse=True)
     releases.sort(key=lambda r: order.get(r["channel"], 3))
     # Directories of releases that are no longer served.
@@ -341,6 +367,10 @@ def cmd_build(args):
     catalog = {"schema": 1,
                "generated": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                "releases": releases}
+    # A name the publisher has given to a release that is not there yet is listed as waiting.
+    waiting = [w for w in config.get(None, []) if w.get("channel") not in {r["channel"] for r in releases}]
+    if waiting:
+        catalog["pending"] = [{k: w[k] for k in ("channel", "label", "note") if w.get(k)} for w in waiting]
     with open(os.path.join(args.out, "catalog.json"), "w", encoding="utf-8") as f:
         json.dump(catalog, f, indent=1)
         f.write("\n")
@@ -365,6 +395,8 @@ def main(argv=None):
     b.add_argument("--out", required=True, help="the site's directory")
     b.add_argument("--no-sums", action="store_true", help="do not ask for SHA256SUMS files")
     b.add_argument("--keep-going", action="store_true", help="leave a refused release out and write the rest")
+    b.add_argument("--config", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "releases.config.json"),
+                   help="how the page presents each release (default: releases.config.json beside the scripts)")
     b.add_argument("--with-notes", action="store_true",
                    help="also put each release's title, notes and commit into the catalog; they are the team's own words, "
                         "so leave this out for a page that anyone can read")

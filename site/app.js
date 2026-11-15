@@ -9,7 +9,7 @@
 
 import { BOARDS, ROLES, compareVersions, sameVersion } from "./js/boards.js";
 import { bytesText } from "./js/bytes.js";
-import { FileError, fetchBoard, firstRelease, loadCatalog } from "./js/catalog.js";
+import { FileError, VALIDATED, fetchBoard, firstRelease, loadCatalog } from "./js/catalog.js";
 import { DIRECT_STEPS, FlashError, flashDirect, look } from "./js/direct.js";
 import { LEFT, MasterLink, THROUGH_STEPS, ThroughError, flashThroughMaster } from "./js/north.js";
 
@@ -79,16 +79,25 @@ function heroFromConnection() {
 
 // --- the release ------------------------------------------------------------
 const CHANNEL = {
+  alpha: ["ALPHA", "green"],
+  beta: ["BETA", "amber"],
   verified: ["VERIFIED", "green"],
   untested: ["UNTESTED", "amber"],
   draft: ["DRAFT", "amber"],
 };
+const GATE = {
+  beta: "Beta is the current build. It has not been through a validation as Alpha has. Tick here to flash it all the same.",
+  untested: "This release is marked untested: nobody has confirmed it on a unit. Tick here to flash it all the same.",
+  draft: "This release is a draft: it has not been published yet. Tick here to flash it all the same.",
+};
 
 function renderReleasePicker() {
   const select = $("release-select");
-  select.replaceChildren(...state.catalog.releases.map((r) => el("option", { value: r.tag, text: r.tag + (r.date ? "  " + r.date : "") })));
+  const name = (r) => (r.label ? `${r.label}  \u00b7  ${r.date || r.tag}` : r.tag + (r.date ? "  " + r.date : ""));
+  const waiting = (state.catalog.pending ?? []).map((w) => el("option", { disabled: true, text: `${w.label ?? w.channel}  \u00b7  not here yet` }));
+  select.replaceChildren(...state.catalog.releases.map((r) => el("option", { value: r.tag, text: name(r) })), ...waiting);
   select.value = state.release.tag;
-  select.disabled = state.catalog.releases.length < 2;
+  select.disabled = state.catalog.releases.length + waiting.length < 2;
 }
 
 function renderRelease() {
@@ -98,14 +107,12 @@ function renderRelease() {
   $("release-channel").dataset.tone = tone;
 
   const gate = $("gate");
-  if (r.channel === "verified") {
+  if (VALIDATED.has(r.channel)) {
     gate.hidden = true;
     state.armed = true;
   } else {
     gate.hidden = false;
-    $("gate-text").textContent = r.channel === "draft"
-      ? "This release is a draft: it has not been published yet. Tick here to flash it all the same."
-      : "This release is marked untested: nobody has confirmed it on a unit. Tick here to flash it all the same.";
+    $("gate-text").textContent = GATE[r.channel] ?? GATE.untested;
     $("gate-tick").checked = state.armed = false;
   }
 
@@ -136,8 +143,10 @@ function renderRelease() {
   const table = el("table", { class: "files" },
     el("thead", {}, el("tr", {}, el("th", { text: "FILE" }), el("th", { class: "num", text: "WRITTEN AT" }), el("th", { class: "num", text: "SIZE" }), el("th", { text: "SHA-256" }))),
     el("tbody", {}, rows));
+  const waiting = (state.catalog.pending ?? []).map((w) => `${w.label ?? w.channel}: ${w.note ?? "not here yet"}`);
   body.replaceChildren(
-    summary ? el("p", { class: "release-summary", text: summary }) : null,
+    el("p", { class: "release-summary" }, el("strong", { text: (r.label ?? r.tag) + ". " }), r.note ? r.note + " " : "", summary, r.label ? ` It is ${r.tag} of the firmware.` : ""),
+    waiting.length ? el("p", { class: "release-summary", text: waiting.join(" ") }) : null,
     el("div", { class: "files-scroll" }, table),
     r.notes ? el("details", { class: "release-notes" }, el("summary", { text: "THE RELEASE'S OWN NOTES" }), el("pre", { class: "notes-text", text: r.notes })) : null);
 }
@@ -452,6 +461,13 @@ function question(q, role) {
       yes: "WRITE IT ANYWAY", no: "STOP",
     };
   }
+  if (q.kind === "usb-reset") {
+    return {
+      text: "This board does not answer as one of the unit's three firmwares, and it is not in its loader. A new master is like that: it runs its maker's firmware.",
+      more: "The page can restart it into its loader over USB. That has worked on the master boards tried so far (chip revision 1.2). A sensor's chip (revision 1.0) hangs when this is done to it, until its power is cut: say yes only for the board with the screen. The other way is by hand: hold BOOT, press RESET, let go, and try again.",
+      yes: "RESTART IT OVER USB", no: "STOP",
+    };
+  }
   if (q.kind === "through-master") {
     return {
       text: q.held
@@ -632,14 +648,16 @@ async function pretend() {
   const ridB = new sim.PretendBoard({ kind: "xiao", image: await mk("c5_drone_detector", "0.7.0", 7), ...opts });
   const masterB = serial.add(sim.wire(new sim.PretendBoard({ name: "A master that can flash its sensors", kind: "master", image: await mk("uas_detector_master", "0.13.0", 8), mac: [0x10, 0xbd, 0xa3, 0x00, 0x0b, 0x01], ...opts }), { a: rfB, b: ridB }));
   const blank = serial.add(new sim.PretendBoard({ name: "A blank XIAO, held in its loader", kind: "xiao", image: null, inLoader: true, mac: [0x10, 0xbd, 0xa3, 0x00, 0x0c, 0x01], ...opts }));
+  const fresh = serial.add(new sim.PretendBoard({ name: "A new master, as its maker ships it", kind: "master", image: null, foreign: true, mac: [0x10, 0xbd, 0xa3, 0x00, 0x0d, 0x01], ...opts }));
   const about = new Map([
     [masterA, "firmware 0.10.0; an RF sensor on port A, a Remote ID sensor on port B"],
     [ridA, "firmware 0.7.0, a revision 1.0 chip"],
     [rfA, "firmware c9dfff6, a revision 1.0 chip"],
     [masterB, "firmware 0.13.0, the version that takes sensor images; sensors on both ports"],
     [blank, "nothing on it; as with the BOOT button held while it was plugged in"],
+    [fresh, "it runs the maker's own firmware, which knows none of the page's commands"],
   ]);
-  const order = [masterA, ridA, rfA, masterB, blank];
+  const order = [masterA, fresh, ridA, rfA, masterB, blank];
   serial.choose = (boards) => new Promise((resolve) => {
     const list = $("chooser-list");
     const close = (board) => { $("chooser").hidden = true; resolve(board); };
@@ -651,7 +669,7 @@ async function pretend() {
     $("chooser-cancel").onclick = () => close(null);
     $("chooser").hidden = false;
   });
-  window.pretend = { serial, boards: { masterA, ridA, rfA, masterB, ridB, rfB, blank } };   // for a look from the console
+  window.pretend = { serial, boards: { masterA, ridA, rfA, masterB, ridB, rfB, blank, fresh } };   // for a look from the console
   return serial;
 }
 
