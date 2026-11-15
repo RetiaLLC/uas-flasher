@@ -1,0 +1,4 @@
+# The releases as fetched from GitHub. The checked copies the page serves are in site/firmware/.
+/releases/
+__pycache__/
+.DS_Store

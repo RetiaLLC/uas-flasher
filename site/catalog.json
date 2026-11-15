@@ -1,0 +1,100 @@
+{
+ "schema": 1,
+ "generated": "2026-11-15T21:44:47Z",
+ "releases": [
+  {
+   "tag": "release-2026-11-15",
+   "date": "2026-11-15",
+   "channel": "draft",
+   "boards": {
+    "master": {
+     "project": "uas_detector_master",
+     "version": "0.11.0",
+     "built": "Nov 14 2026 22:06:11",
+     "idf": "v5.5.1",
+     "flash": {
+      "mode": "dio",
+      "freq": "80m",
+      "size": "8MB"
+     },
+     "app_slot": {
+      "offset": 65536,
+      "size": 4194304
+     },
+     "nvs": {
+      "offset": 36864,
+      "size": 24576
+     },
+     "parts": [
+      {
+       "kind": "bootloader",
+       "file": "firmware/release-2026-11-15/master-0.11.0-bootloader.bin",
+       "offset": 8192,
+       "size": 19296,
+       "sha256": "054658b131e2793769a7fc1bc72e6a0955ff494202c73f89e472ebd16ffb97ac"
+      },
+      {
+       "kind": "partition-table",
+       "file": "firmware/release-2026-11-15/master-0.11.0-partition-table.bin",
+       "offset": 32768,
+       "size": 3072,
+       "sha256": "fd8026bff850ca0dee41c41305160317fffe604dda30a9bd5a701ac82d96fa17"
+      },
+      {
+       "kind": "app",
+       "file": "firmware/release-2026-11-15/master-0.11.0-uas_detector_master.bin",
+       "offset": 65536,
+       "size": 982912,
+       "sha256": "9140f1c8ab8afcdfc6a6b194b327a34525b92cd2ada9496b98502f4580e64bbb"
+      }
+     ]
+    },
+    "rid": {
+     "project": "c5_drone_detector",
+     "version": "0.7.3",
+     "built": "Nov 15 2026 08:12:50",
+     "idf": "v5.5.1",
+     "flash": {
+      "mode": "dio",
+      "freq": "80m",
+      "size": "8MB"
+     },
+     "app_slot": {
+      "offset": 65536,
+      "size": 4128768
+     },
+     "nvs": {
+      "offset": 36864,
+      "size": 24576
+     },
+     "parts": [
+      {
+       "kind": "bootloader",
+       "file": "firmware/release-2026-11-15/rid-0.7.3-bootloader.bin",
+       "offset": 8192,
+       "size": 14448,
+       "sha256": "3623d9ff0a1e1b66fd8919e840beabba36d2b5ecb88a24710bf158b4e9a395b1"
+      },
+      {
+       "kind": "partition-table",
+       "file": "firmware/release-2026-11-15/rid-0.7.3-partition-table.bin",
+       "offset": 32768,
+       "size": 3072,
+       "sha256": "c9a826e85500d14d1854ce78e47452d4614a1be371bbd056278d2cb3398fbbfd"
+      },
+      {
+       "kind": "app",
+       "file": "firmware/release-2026-11-15/rid-0.7.3-c5_drone_detector.bin",
+       "offset": 65536,
+       "size": 1309536,
+       "sha256": "fc9aa7de9b3f80391d8218cd706cbc92547eff48eb6aa93db70e4da371a9e7cb"
+      }
+     ]
+    }
+   },
+   "missing": [
+    "rf"
+   ]
+  }
+ ]
+}
