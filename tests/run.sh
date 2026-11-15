@@ -9,9 +9,10 @@ cd "$(dirname "$0")/.."
 python3 -m unittest -q tests/test_build_catalog.py
 # esptool-js prints a TRACE line when a board leaves USB, as it does after every
 # flash. They are left out of what is shown; the tests' own result decides.
+# The limit is for a whole file: the direct-flash tests wait as a person's board would, about two minutes in all.
 out=$(mktemp)
 status=0
-node --test --test-timeout=120000 tests/*.test.mjs >"$out" 2>&1 || status=$?
+node --test --test-timeout=420000 tests/*.test.mjs >"$out" 2>&1 || status=$?
 grep -v '^TRACE' "$out" || true
 rm -f "$out"
 exit $status

@@ -403,7 +403,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
         if (!now.role && i + 1 < tries) await sleep(500);
       }
     };
-    await hear(2);
+    await hear(1);          // a master greets a reader within a second of its start
     if (!now.role && role === "master" && (major > 1 || minor >= 1)) {
       // Measured on a revision 1.2 master, 15 Nov 2026: after the loader's
       // watchdog restart the firmware runs and takes commands, but nothing it
@@ -435,7 +435,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
       }
       await hear(4);
     } else {
-      await hear(2);
+      await hear(3);
     }
     out.io = io;          // left open for the page, which may go on talking to a master
     out.guard = guard;
