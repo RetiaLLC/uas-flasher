@@ -149,11 +149,12 @@ function renderRelease() {
     el("thead", {}, el("tr", {}, el("th", { text: "FILE" }), el("th", { class: "num", text: "WRITTEN AT" }), el("th", { class: "num", text: "SIZE" }), el("th", { text: "SHA-256" }))),
     el("tbody", {}, rows));
   const waiting = (state.catalog.pending ?? []).map((w) => `${w.label ?? w.channel}: ${w.note ?? "not here yet"}`);
-  body.replaceChildren(
+  body.replaceChildren(...[
     el("p", { class: "release-summary" }, el("strong", { text: (r.label ?? r.tag) + ". " }), r.note ? r.note + " " : "", summary, r.label ? ` Release tag: ${r.tag}.` : ""),
     waiting.length ? el("p", { class: "release-summary", text: waiting.join(" ") }) : null,
     el("div", { class: "files-scroll" }, table),
-    r.notes ? el("details", { class: "release-notes" }, el("summary", { text: "THE RELEASE'S OWN NOTES" }), el("pre", { class: "notes-text", text: r.notes })) : null);
+    r.notes ? el("details", { class: "release-notes" }, el("summary", { text: "THE RELEASE'S OWN NOTES" }), el("pre", { class: "notes-text", text: r.notes })) : null,
+  ].filter(Boolean));
 }
 
 // --- the three boards ---------------------------------------------------------

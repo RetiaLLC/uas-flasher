@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated": "2026-11-16T05:14:43Z",
+ "generated": "2026-11-16T07:27:41Z",
  "releases": [
   {
    "tag": "release-2026-11-15",
@@ -49,6 +49,9 @@
        "size": 982912,
        "sha256": "9140f1c8ab8afcdfc6a6b194b327a34525b92cd2ada9496b98502f4580e64bbb"
       }
+     ],
+     "notes": [
+      "The unit doesn't detect DJI's DroneID signal, and a DJI OcuSync link on 2.4 GHz can show as a remote control."
      ]
     },
     "rid": {
@@ -149,6 +152,10 @@
        "size": 1031360,
        "sha256": "60d45f0d288625788db4e5bc4befecb489e0d94aa2ef9ede5e5fd0da8cf33c90"
       }
+     ],
+     "notes": [
+      "A Wi-Fi aircraft's row can show the name of a nearby Wi-Fi network instead of the aircraft's own. The alert itself is correct.",
+      "The unit doesn't detect DJI's DroneID signal, and a DJI OcuSync link on 2.4 GHz can show as a remote control."
      ]
     },
     "rf-6da55bc-xiao": {
@@ -198,7 +205,10 @@
      "hardware": "Seeed XIAO ESP32-C5",
      "label": "Seeed XIAO ESP32-C5",
      "notes": [
-      "A measuring build for troubleshooting a demo, from a change that isn't merged yet. Its source code will be published later."
+      "A measuring build for troubleshooting a demo, from a change that isn't merged yet. Its source code will be published later.",
+      "A \"control 2.4 GHz\" alert can come from a Wi-Fi or DJI aircraft, not only from a remote control. In bench tests a simulated Wi-Fi drone link showed as control in 1 of 3 runs, and an imitation of DJI's OcuSync link in 3 of 3.",
+      "Digital video on 5.8 GHz is reported only when the signal is strong. At bench distance HDZero was listed, but Walksnail and DJI OcuSync on 5.8 GHz were missed.",
+      "In a 7.4-hour test with none of our transmitters on, this build reported a remote control link 22 times, about 3 an hour. The longest lasted 48 seconds. The cause isn't known."
      ]
     },
     "rf-a2a45f2-ipex-zero": {
@@ -248,7 +258,10 @@
      "hardware": "Waveshare ESP32-C5-Zero, antenna on its IPEX socket",
      "label": "Waveshare ESP32-C5-Zero",
      "notes": [
-      "A measuring build for troubleshooting a demo, from a change that isn't merged yet. Its source code will be published later."
+      "A measuring build for troubleshooting a demo, from a change that isn't merged yet. Its source code will be published later.",
+      "A \"control 2.4 GHz\" alert can come from a Wi-Fi or DJI aircraft, not only from a remote control. In bench tests a simulated Wi-Fi drone link showed as control in 1 of 3 runs, and an imitation of DJI's OcuSync link in 3 of 3.",
+      "Digital video on 5.8 GHz is reported only when the signal is strong. At bench distance HDZero was listed, but Walksnail and DJI OcuSync on 5.8 GHz were missed.",
+      "In a 2.4-hour test with none of our transmitters on, this build reported no remote control links."
      ]
     }
    },
