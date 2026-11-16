@@ -25,6 +25,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: The guide's converter, for its tests
+        run: python -m pip install markdown-it-py==4.2.0
       - name: The page's tests, and the catalog's files against their sums
         run: sh tests/run.sh
   publish:

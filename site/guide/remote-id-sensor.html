@@ -167,9 +167,8 @@
 <p>The sensor restarts by itself. The master's port turns green again, and the master's Ports screen shows the new version.</p>
 </li>
 </ol>
-<blockquote>
-<p>[!WARNING]
-<strong>Never leave out <code>--before no-reset --after watchdog-reset</code>.</strong> The chip on this board is a revision 1.0 ESP32-C5. esptool's usual reset left such a chip hung, with its USB dead, until a full reset (measured on a bench board of the same chip, 13 Nov 2026). For the same reason, do not press the board's buttons to enter the loader, and do not flash it with a tool that resets it by itself.</p>
+<blockquote class="callout callout-warning">
+<p class="callout-title">Warning</p><p><strong>Never leave out <code>--before no-reset --after watchdog-reset</code>.</strong> The chip on this board is a revision 1.0 ESP32-C5. esptool's usual reset left such a chip hung, with its USB dead, until a full reset (measured on a bench board of the same chip, 13 Nov 2026). For the same reason, do not press the board's buttons to enter the loader, and do not flash it with a tool that resets it by itself.</p>
 </blockquote>
 <p>The same steps through a bench computer are in <code>detector/tools/portal_flash.sh</code>, which is how every flash so far was done. The two commands above were not run in exactly this form from a laptop.</p>
 <h3 id="run-it-alone-on-usb">Run it alone on USB</h3>

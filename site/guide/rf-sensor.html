@@ -186,9 +186,8 @@
 </tr>
 </tbody>
 </table></div>
-<blockquote>
-<p>[!CAUTION]
-A verified control link is not proof of a drone. Measured on 15 Nov 2026 in the lab: with no transmitter of ours on, two sensors a few metres apart both reported a verified link at the same moments, from some other device in the building that sends with the same beat. What that device is was not yet known when this page was written (issue 74).</p>
+<blockquote class="callout callout-caution">
+<p class="callout-title">Caution</p><p>A verified control link is not proof of a drone. Measured on 15 Nov 2026 in the lab: with no transmitter of ours on, two sensors a few metres apart both reported a verified link at the same moments, from some other device in the building that sends with the same beat. What that device is was not yet known when this page was written (issue 74).</p>
 </blockquote>
 <p><strong>Following one signal (seeker).</strong> When you ask the master to follow a signal, this sensor stops surveying and stays on that one signal, reporting its strength five times a second. While it does, it finds nothing new, and the master holds everything else as it stood. It goes back to surveying by itself when you leave that screen. The strength is a level that goes up as you come nearer; it is not a distance. Only builds made with the seeker switched on can do this (<code>hello</code> then lists <code>seek</code>); the design is in <code>../SEEKER.md</code>.</p>
 <h2 id="4-how-to">4. How to</h2>
@@ -214,9 +213,8 @@ A verified control link is not proof of a drone. Measured on 15 Nov 2026 in the 
 <p>The sensor restarts by itself and the master's Ports screen shows the new firmware name.</p>
 </li>
 </ol>
-<blockquote>
-<p>[!WARNING]
-<strong>Never let a tool reset this board for you.</strong> The chip on these sensors is revision 1.0. Leave <code>--before no-reset</code> in the line, do not use esptool's default reset or its USB reset, and do not flash it with OpenOCD. Measured on 14 Nov 2026 on a board like it: such a reset left the chip stuck in its loader, and only taking away all power brought it back.</p>
+<blockquote class="callout callout-warning">
+<p class="callout-title">Warning</p><p><strong>Never let a tool reset this board for you.</strong> The chip on these sensors is revision 1.0. Leave <code>--before no-reset</code> in the line, do not use esptool's default reset or its USB reset, and do not flash it with OpenOCD. Measured on 14 Nov 2026 on a board like it: such a reset left the chip stuck in its loader, and only taking away all power brought it back.</p>
 </blockquote>
 <p>If the write fails halfway, the sensor stays in its loader, dark and silent, until it is written again (measured, 15 Nov 2026). Run step 3 again; step 2 is not needed then.</p>
 <h3 id="run-it-alone-on-usb">Run it alone on USB</h3>

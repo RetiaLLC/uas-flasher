@@ -106,13 +106,53 @@ def rewrite_target(target, page_dir):
     return None
 
 
+ALERTS = {"NOTE": "Note", "TIP": "Tip", "IMPORTANT": "Important", "WARNING": "Warning", "CAUTION": "Caution"}
+ALERT_MARK = re.compile(r"^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$")
+
+
+def alerts(tokens, md_lib):
+    """GitHub's alerts: a quote whose first line is only [!WARNING] (or NOTE, TIP,
+    IMPORTANT, CAUTION) becomes a box with that word as its title. The rest of the
+    quote is left as it is. A marker anywhere else, in code or in prose, stays text."""
+    Token = md_lib.token.Token
+    out, i = [], 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if (tok.type == "blockquote_open" and i + 2 < len(tokens) and tokens[i + 1].type == "paragraph_open"
+                and tokens[i + 2].type == "inline" and tokens[i + 2].children
+                and tokens[i + 2].children[0].type == "text" and ALERT_MARK.match(tokens[i + 2].children[0].content)):
+            kind = ALERT_MARK.match(tokens[i + 2].children[0].content).group(1)
+            kids = tokens[i + 2].children[1:]
+            if kids and kids[0].type in ("softbreak", "hardbreak"):
+                kids = kids[1:]
+            tok.attrSet("class", "callout callout-" + kind.lower())
+            title = [Token("paragraph_open", "p", 1), Token("inline", "", 0), Token("paragraph_close", "p", -1)]
+            title[0].attrSet("class", "callout-title")
+            word = Token("text", "", 0)
+            word.content = ALERTS[kind]
+            title[1].children = [word]
+            title[1].content = ALERTS[kind]
+            out.append(tok)
+            out.extend(title)
+            if kids:
+                tokens[i + 2].children = kids
+                out.extend(tokens[i + 1:i + 3])
+                i += 3
+            else:
+                i += 4          # the paragraph held the marker alone
+            continue
+        out.append(tok)
+        i += 1
+    return out
+
+
 def render(md, page_dir, md_lib):
     md = drop_section(md, DROP_SECTION)
     # Task lists: a box to tick on paper.
     md = re.sub(r"^(\s*)- \[ \] ", "\\1- ☐ ", md, flags=re.M)
     md = re.sub(r"^(\s*)- \[x\] ", "\\1- ☑ ", md, flags=re.M | re.I)
     parser = md_lib.MarkdownIt("commonmark", {"html": False, "typographer": False}).enable("table")
-    tokens = parser.parse(md)
+    tokens = alerts(parser.parse(md), md_lib)
     seen = {}
     title = None
     dropped = []
@@ -205,6 +245,7 @@ NAV = [("index.html", "Guide"), ("quickstart.html", "Quickstart"), ("how-to.html
 
 def cmd_build(args):
     import markdown_it
+    import markdown_it.token  # noqa: F401  (for alerts)
     commit = open(os.path.join(args.src, "COMMIT")).read().strip()[:7] if os.path.exists(os.path.join(args.src, "COMMIT")) else "unknown"
     if os.path.isdir(args.out):
         shutil.rmtree(args.out)

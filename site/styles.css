@@ -316,3 +316,13 @@ h2, h3, p { margin: 0; }
 .guide h1[id], .guide h2[id], .guide h3[id], .guide h4[id] { scroll-margin-top: 12px; }
 .top-right .guide-link { font: 700 0.72rem var(--mono); letter-spacing: 0.1em; text-decoration: none; color: var(--text); background: var(--btn); border: 1px solid #38383c; border-radius: 8px; padding: 7px 11px; }
 .top-right .guide-link:hover { background: var(--btn-hi); }
+
+/* GitHub's alerts, as the guide's build turns them out: a titled box */
+.guide blockquote.callout { border-left-width: 4px; padding: 12px 16px; }
+.guide .callout-title { font: 700 0.78rem var(--mono); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+.guide .callout-title::before { content: "! "; }
+.guide blockquote.callout-warning, .guide blockquote.callout-caution { border-left-color: var(--red); background: #1d0a08; }
+.guide blockquote.callout-warning .callout-title, .guide blockquote.callout-caution .callout-title { color: var(--red); }
+.guide blockquote.callout-note, .guide blockquote.callout-tip, .guide blockquote.callout-important { border-left-color: var(--blue); background: #08101d; }
+.guide blockquote.callout-note .callout-title, .guide blockquote.callout-tip .callout-title, .guide blockquote.callout-important .callout-title { color: var(--blue); }
+.guide .callout-tip .callout-title::before, .guide .callout-note .callout-title::before { content: ""; }

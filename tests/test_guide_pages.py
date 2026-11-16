@@ -38,6 +38,11 @@ class GuidePages(unittest.TestCase):
                 if anchor:
                     self.assertIn(anchor, ids[page], "%s: %s" % (name, href))
 
+    def test_no_alert_marker_shows_as_text(self):
+        for name, text in self.pages().items():
+            for kind in ("NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"):
+                self.assertNotIn("[!%s]" % kind, text, name)
+
     def test_every_picture_is_there(self):
         for name, text in self.pages().items():
             for src in re.findall(r'src="([^"]+)"', text):
