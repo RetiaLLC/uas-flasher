@@ -86,7 +86,7 @@ const CHANNEL = {
   draft: ["DRAFT", "amber"],
 };
 const GATE = {
-  beta: "Beta is the current build. It has not been through a validation as Alpha has. Tick here to flash it all the same.",
+  beta: "The Beta is the most up-to-date master, with the landscape screen, and it may contain bugs. It has not been validated as the Alpha has. Tick here to flash it all the same.",
   untested: "This release is marked untested: nobody has confirmed it on a unit. Tick here to flash it all the same.",
   draft: "This release is a draft: it has not been published yet. Tick here to flash it all the same.",
 };

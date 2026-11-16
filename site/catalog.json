@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated": "2026-11-15T22:31:18Z",
+ "generated": "2026-11-16T03:26:03Z",
  "releases": [
   {
    "tag": "release-2026-11-15",
@@ -95,15 +95,63 @@
    "missing": [
     "rf"
    ],
-   "label": "Alpha",
-   "note": "Validated on a unit through the night of 14 to 15 Nov 2026."
-  }
- ],
- "pending": [
+   "label": "Alpha (portrait screen)",
+   "note": "Validated on a unit through the night of 14 to 15 Nov 2026. The way back if the Beta gives trouble."
+  },
   {
+   "tag": "release-2026-11-16-beta",
+   "date": "2026-11-16",
    "channel": "beta",
-   "label": "Beta",
-   "note": "The current build. Its files are not in a release yet."
+   "boards": {
+    "master": {
+     "project": "uas_detector_master",
+     "version": "0.12.0",
+     "built": "Nov 15 2026 17:52:25",
+     "idf": "v5.5.1",
+     "flash": {
+      "mode": "dio",
+      "freq": "80m",
+      "size": "8MB"
+     },
+     "app_slot": {
+      "offset": 65536,
+      "size": 4194304
+     },
+     "nvs": {
+      "offset": 36864,
+      "size": 24576
+     },
+     "parts": [
+      {
+       "kind": "bootloader",
+       "file": "firmware/release-2026-11-16-beta/master-0.12.0-bootloader.bin",
+       "offset": 8192,
+       "size": 19296,
+       "sha256": "83e75e669cfb3f0dab4c229770346e1b06e8afd012afc93bb87fde289ca16335"
+      },
+      {
+       "kind": "partition-table",
+       "file": "firmware/release-2026-11-16-beta/master-0.12.0-partition-table.bin",
+       "offset": 32768,
+       "size": 3072,
+       "sha256": "fd8026bff850ca0dee41c41305160317fffe604dda30a9bd5a701ac82d96fa17"
+      },
+      {
+       "kind": "app",
+       "file": "firmware/release-2026-11-16-beta/master-0.12.0-uas_detector_master.bin",
+       "offset": 65536,
+       "size": 1031360,
+       "sha256": "60d45f0d288625788db4e5bc4befecb489e0d94aa2ef9ede5e5fd0da8cf33c90"
+      }
+     ]
+    }
+   },
+   "missing": [
+    "rid",
+    "rf"
+   ],
+   "label": "Beta (Anubis, landscape screen)",
+   "note": "The newest master, with the landscape screen. It is the most up to date, and it may contain bugs. For the sensors, use the Alpha."
   }
  ]
 }

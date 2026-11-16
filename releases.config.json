@@ -3,15 +3,13 @@
   "releases": {
     "release-2026-11-15": {
       "channel": "alpha",
-      "label": "Alpha",
-      "note": "Validated on a unit through the night of 14 to 15 Nov 2026."
-    }
-  },
-  "pending": [
-    {
+      "label": "Alpha (portrait screen)",
+      "note": "Validated on a unit through the night of 14 to 15 Nov 2026. The way back if the Beta gives trouble."
+    },
+    "release-2026-11-16-beta": {
       "channel": "beta",
-      "label": "Beta",
-      "note": "The current build. Its files are not in a release yet."
+      "label": "Beta (Anubis, landscape screen)",
+      "note": "The newest master, with the landscape screen. It is the most up to date, and it may contain bugs. For the sensors, use the Alpha."
     }
-  ]
+  }
 }
