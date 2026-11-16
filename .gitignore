@@ -2,3 +2,5 @@
 /releases/
 __pycache__/
 .DS_Store
+# The guide's Markdown as fetched from the firmware's repository. The pages built from it are in site/guide/.
+/guide-src/

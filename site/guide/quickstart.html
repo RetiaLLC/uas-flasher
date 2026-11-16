@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quickstart · UAS Detector</title>
+<meta name="description" content="From a finished unit in the hand to its first alert. It takes about ten minutes, and most of them go to one calibration and to trying your own aircraft.">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body class="guide-page">
+<header class="top wrap">
+  <div class="brand">
+    <span class="brand-name">UAS DETECTOR</span>
+    <span class="brand-what">USER GUIDE</span>
+  </div>
+  <nav class="guide-nav" aria-label="Guide">
+    <a href="index.html">Guide</a>
+    <a href="quickstart.html" aria-current="page">Quickstart</a>
+    <a href="how-to.html">How-to</a>
+    <a href="../">Firmware</a>
+  </nav>
+</header>
+<main class="wrap guide">
+<p class="guide-note">This guide describes master firmware 0.12.0, the landscape screen: the <strong>Beta</strong> on the <a href="../">firmware page</a>. The Alpha has the earlier, upright screen. Commands below that name <code>tools/</code> need the project's own tools, which are not public yet.</p>
+<h1 id="quickstart">Quickstart</h1>
+<p>From a finished unit in the hand to its first alert. It takes about ten minutes, and most of them go to one calibration and to trying your own aircraft.</p>
+<ul>
+<li>Describes master firmware 0.12.0 with the landscape screen, as the <a href="index.html">user guide</a> does</li>
+<li>A statement here is read from the firmware unless it says measured or estimated. The user guide explains those words</li>
+</ul>
+<p>The unit is taken to be built and flashed. Building it is the wiring guide.</p>
+<h2 id="before-you-switch-on">Before you switch on</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All three antennas are fitted</td>
+<td>A sensor without its antenna looks alive and hears almost nothing (read: wiring guide)</td>
+</tr>
+<tr>
+<td>The cell is plugged in, or a USB supply of 2 A or more is in the master's own socket</td>
+<td>Either runs the whole unit. A sensor's USB socket alone does not</td>
+</tr>
+<tr>
+<td>A TF card is in the slot, if you want a log</td>
+<td>FAT32, 32 GB or smaller. Put it in now: a card put in while the master runs has not been tried</td>
+</tr>
+<tr>
+<td>Your own aircraft, remote control and video goggles are switched off</td>
+<td>Step 5 learns what is on the air</td>
+</tr>
+<tr>
+<td>The antennas are as high and as free as you can carry them</td>
+<td>A unit held up hears further than one in a bag (estimated)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="1-switch-on">1. Switch on</h2>
+<p>Hold the master's power button for about 1 s.</p>
+<ul>
+<li>You hear four rising notes.</li>
+<li>You see the Home screen: a bar at the top, the level at the left, three pictures and a list at the right, four buttons at the foot.</li>
+</ul>
+<p><img src="img/home_clear.png" alt="Home with nothing on the air" loading="lazy" width="640" height="480" /></p>
+<h2 id="2-read-the-light-at-the-lower-left">2. Read the light at the lower left</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>You see</th>
+<th>It means</th>
+<th>Do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SCANNING with a green dot</td>
+<td>Both sensors are linked and listening</td>
+<td>Go on</td>
+</tr>
+<tr>
+<td>SCANNING in yellow with a warning sign</td>
+<td>One sensor is still starting, or does not answer</td>
+<td>Wait a few seconds. If it stays, press PORTS and see <a href="how-to.html#when-something-is-wrong">When something is wrong</a></td>
+</tr>
+<tr>
+<td>NO RADIO in red</td>
+<td>Neither sensor answers</td>
+<td>The same page</td>
+</tr>
+</tbody>
+</table></div>
+<p>Press PORTS for the detail: each port should read UP in green, with RADIO RUNNING and SETTINGS OK under it. Press HOME to come back.</p>
+<p>The picture of a cell at the top right is the charge. <code>BT</code> beside it is grey until a phone connects.</p>
+<h2 id="3-read-the-level">3. Read the level</h2>
+<p>It should read <strong>CLEAR</strong> in green, with the three pictures unlit and NO SIGNALS in the list.</p>
+<p>If it reads NOTICE, DETECT or CONFIRMED, something is on the air already. The rows at the right say what. That is common indoors, and step 5 is for it. A tap on the left side stops the sound meanwhile.</p>
+<h2 id="4-pair-your-phone">4. Pair your phone</h2>
+<p>Skip this if you have no phone with the app. The unit works without one; only its clock stays unset.</p>
+<ol>
+<li>Press PHONE at the foot of the master's screen. Note the name it shows, as in <code>UAS Master-1A2B</code>.</li>
+<li>In the app, find the master and choose that name.</li>
+<li>The master shows PAIRING REQUEST. Press ALLOW.</li>
+<li>The master shows six digits. Type them on the phone promptly: Android ends a pairing about half a minute after it began (measured, 14 Nov 2026: master). If it ran out, choose the master in the app again. ALLOW keeps pairing open for 120 s.</li>
+</ol>
+<ul>
+<li>You see <code>BT</code> turn blue.</li>
+<li>The top bar now shows the time. The master took it from the phone, so the phone's own clock should be right.</li>
+</ul>
+<h2 id="5-calibrate-the-place">5. Calibrate the place</h2>
+<p>A calibration learns the signals that belong to this place, so that they stay quiet from now on. Do it on arrival at every new place.</p>
+<ol>
+<li>Make sure once more that your own aircraft, remote control and video transmitter are off.</li>
+<li>Press CAL, then 60 S. If the unit was last used somewhere else, press FORGET ALL first.</li>
+</ol>
+<ul>
+<li>You see CALIBRATING, the seconds counting down, and &quot;2 SIGNALS LEARNED SO FAR&quot; with a line for each.</li>
+<li>When the time is up, the screen says &quot;LAST RUN: 2 NEW, 0 STRONGER&quot; and lists what is known.</li>
+</ul>
+<p><img src="img/cal_done.png" alt="Cal after a calibration" loading="lazy" width="640" height="480" /></p>
+<p>Read the list. Every line is a signal that will raise no alert here unless it comes back more than 10 dB stronger. If a line is something of your own that you forgot to switch off, press FORGET ALL, switch it off and calibrate again.</p>
+<ul>
+<li>A place with nothing on the air gives &quot;LAST RUN: 0 NEW, 0 STRONGER&quot;. That is a good result.</li>
+<li>A yellow line &quot;1 AIRCRAFT SIGNAL: NOT LEARNED&quot; means an aircraft was broadcasting its identity meanwhile. The unit never learns that, and goes on alerting for it.</li>
+<li>The green line &quot;NO ALERT FOR ...&quot; counts how long the unit has been quiet since. Watch it for a minute or two.</li>
+</ul>
+<h2 id="6-leave-the-sensitivity-as-it-is">6. Leave the sensitivity as it is</h2>
+<p>A new unit is at medium for all three kinds of sensor, Try the unit at that level first. <a href="index.html#sensitivity-and-the-other-settings">Sensitivity</a> says what low and high change.</p>
+<h2 id="7-try-it-with-your-own-aircraft">7. Try it with your own aircraft</h2>
+<p>Press HOME. Switch on your remote control a few metres from the unit, then the aircraft or its video transmitter.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>What you switched on</th>
+<th>What to expect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>An ExpressLRS remote control on 2.4 GHz</td>
+<td><strong>DETECT</strong> in red. The controller's picture turns red; the aircraft stays unlit. A row with a red <code>CTRL</code> tag and the packet rate as its name. Three quick beeps, then single beeps</td>
+</tr>
+<tr>
+<td>An analog video transmitter on 5.8 GHz</td>
+<td><strong>DETECT</strong>. The aircraft's picture is grey with its camera in red. A row with a <code>VID</code> tag and the FPV channel as its name</td>
+</tr>
+<tr>
+<td>Both</td>
+<td><strong>CONFIRMED</strong>, the red step blinking, aircraft and controller both red, and the sound becomes a warble</td>
+</tr>
+<tr>
+<td>An aircraft that broadcasts Remote ID</td>
+<td><strong>DETECT</strong>, the whole aircraft red, and a row with a <code>RID</code> tag and the aircraft's ID as its name</td>
+</tr>
+<tr>
+<td>An aircraft flown from a phone over Wi-Fi</td>
+<td><strong>DETECT</strong>, the aircraft and the Wi-Fi sign red, and a row with a <code>WAIR</code> tag and its network's name, if that name is one the unit knows</td>
+</tr>
+</tbody>
+</table></div>
+<p><img src="img/home_control_alone.png" alt="A control link alone" loading="lazy" width="640" height="480" /> <img src="img/home_detect_video.png" alt="Video alone" loading="lazy" width="640" height="480" /> <img src="img/home_control_and_video.png" alt="Both" loading="lazy" width="640" height="480" /></p>
+<p>Measured on benches on 14 and 15 Nov 2026: analog video was listed 3 to 5 s after it came on, a control link from a real remote control within a second or two, and a Remote ID broadcast within 0.4 to 8 s depending on how it is sent.</p>
+<p>Then try three things:</p>
+<ul>
+<li>Tap the left side. The sound stops, and it reads SOUND OFF.</li>
+<li>Tap a row. Its own screen says what the signal is, shows the level in figures and has the buttons that mute it.</li>
+<li>Switch everything off again. The video row goes after about 10 s, the control row after 11 to 14 s (estimated: <a href="index.html#the-four-levels">user guide</a>), a Remote ID row after 30 s. The level returns to CLEAR.</li>
+</ul>
+<p>If nothing was listed, your aircraft may use a kind of link the unit does not hear. <a href="index.html#what-it-can-and-cannot-detect-today">What it can and cannot detect today</a> lists them. Also look at the list: a signal that a calibration learned shows as a grey row that says KNOWN and stays silent.</p>
+<h2 id="8-switch-off">8. Switch off</h2>
+<p>Hold the power button for about 2 s. The screen goes dark.</p>
+<p><strong>Then unplug the cell</strong>, unless you will use the unit again soon. The button switches the master only. The two sensors stay powered from the cell, and their sleep while the master is off has not been tested on either sensor. Two sensors that never sleep empty a 1000 mAh cell in hours to a day (estimated: wiring guide).</p>
+<h2 id="next">Next</h2>
+<ul>
+<li>What every screen, colour and sound means: the <a href="index.html">user guide</a>.</li>
+<li>One task at a time, such as muting a signal, recording a walk or preparing for a test day: the <a href="how-to.html">how-to pages</a>.</li>
+</ul>
+
+</main>
+<footer class="wrap foot">
+  <p>The detector only listens for aircraft and their controllers. Its sensors never transmit, and the master's one radio link is Bluetooth to a phone.</p>
+  <p class="foot-small">From the project's guide at commit 50ae254.</p>
+</footer>
+</body>
+</html>

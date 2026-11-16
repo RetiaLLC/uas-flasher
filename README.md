@@ -29,6 +29,7 @@ Add `?demo` to the address to try the page with pretend boards and nothing plugg
 | `site/vendor/` | esptool-js 0.7.1 and two typefaces, served from here. The page loads nothing from another site |
 | `site/catalog.json`, `site/firmware/` | Written by the build step below. The page reads nothing else |
 | `scripts/build_catalog.py` | Fetches releases and turns them into the catalog and the served files |
+| `scripts/build_guide.py` | Fetches the unit's user guide and turns it into `site/guide/` |
 | `scripts/serve.py` | A local server with caching off, for a look at the page |
 | `tools/` | The page's code against a real board, from a terminal: see below |
 | `releases.config.json` | The name each release goes by on the page (Alpha, Beta), and a line about where it stands |
@@ -97,6 +98,17 @@ python3 scripts/build_catalog.py check releases/<tag>
 Read from the files and never typed by a person: the board an application is for (its project name), its version and build date, the flash settings, where the application goes (the partition table), and that nothing is cut short (the SHA-256 each image carries).
 
 Refused: files that do not match their sums; an application that is not one of the three projects, is not for the ESP32-C5, or does not fit its partition; a board with a file missing or doubled; and a master bench build, which writes the pairing passkey to its log and must not be handed out.
+
+## The user guide
+
+The unit's guide is written in the firmware's repository (`docs/guide/`) and published here as `site/guide/`: the full guide, the quickstart and the how-to pages, with their pictures. With `gh` signed in and markdown-it-py installed:
+
+```
+python3 scripts/build_guide.py fetch --repo <owner>/<firmware repository> --into guide-src
+python3 scripts/build_guide.py build --src guide-src --out site/guide
+```
+
+As the guide's owner asked: its last section, which is for the team, is left out, and a link that leaves the guide (into the private repository, or to the sensors' own pages, which are not published yet) is dropped with its words kept. Nothing else changes. `tests/test_guide_pages.py` checks the published pages for both, and that every link and picture inside the guide is there.
 
 ## Looking at it on your own computer
 

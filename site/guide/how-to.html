@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to · UAS Detector</title>
+<meta name="description" content="One task in each section, for a unit with master firmware 0.12.0 and its landscape screen.">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body class="guide-page">
+<header class="top wrap">
+  <div class="brand">
+    <span class="brand-name">UAS DETECTOR</span>
+    <span class="brand-what">USER GUIDE</span>
+  </div>
+  <nav class="guide-nav" aria-label="Guide">
+    <a href="index.html">Guide</a>
+    <a href="quickstart.html">Quickstart</a>
+    <a href="how-to.html" aria-current="page">How-to</a>
+    <a href="../">Firmware</a>
+  </nav>
+</header>
+<main class="wrap guide">
+<p class="guide-note">This guide describes master firmware 0.12.0, the landscape screen: the <strong>Beta</strong> on the <a href="../">firmware page</a>. The Alpha has the earlier, upright screen. Commands below that name <code>tools/</code> need the project's own tools, which are not public yet.</p>
+<h1 id="how-to">How to</h1>
+<p>One task in each section, for a unit with master firmware 0.12.0 and its landscape screen.</p>
+<ul>
+<li>What every screen and word means is in the <a href="index.html">user guide</a>; the first ten minutes with a unit are the <a href="quickstart.html">quickstart</a></li>
+<li>A statement here is read from the firmware unless it says measured or estimated. The user guide explains those words</li>
+</ul>
+<h2 id="contents">Contents</h2>
+<ol>
+<li><a href="#calibrate-a-place-and-check-what-was-learned">Calibrate a place and check what was learned</a></li>
+<li><a href="#forget-a-known-signal">Forget a known signal</a></li>
+<li><a href="#choose-a-sensitivity">Choose a sensitivity</a></li>
+<li><a href="#mute-a-signal-and-take-the-mute-off">Mute a signal, and take the mute off</a></li>
+<li><a href="#follow-one-signal">Follow one signal</a></li>
+<li><a href="#pair-a-phone-and-forget-phones">Pair a phone, and forget phones</a></li>
+<li><a href="#record-a-walk-and-read-it-afterwards">Record a walk and read it afterwards</a></li>
+<li><a href="#read-the-log-on-the-card">Read the log on the card</a></li>
+<li><a href="#change-a-setting-over-usb">Change a setting over USB</a></li>
+<li><a href="#update-the-masters-firmware">Update the master's firmware</a></li>
+<li><a href="#update-a-sensors-firmware">Update a sensor's firmware</a></li>
+<li><a href="#prepare-for-a-demonstration-or-a-test-day">Prepare for a demonstration or a test day</a></li>
+<li><a href="#when-something-is-wrong">When something is wrong</a></li>
+</ol>
+<h2 id="calibrate-a-place-and-check-what-was-learned">Calibrate a place and check what was learned</h2>
+<p>Do this on arrival in every new place, before you rely on the unit there.</p>
+<ol>
+<li>Switch off every aircraft, remote control, video transmitter and pair of goggles that you want the unit to alert for later. A video transmitter, a control link and the Wi-Fi network of an aircraft flown from a phone are learned if they are on the air.</li>
+<li>Press PORTS: both ports UP. A sensor that is not UP learns nothing.</li>
+<li>Press CAL. If the list holds signals from another place, press FORGET ALL first: a calibration only adds.</li>
+<li>Press 60 S or 5 MIN. A signal has to show while the calibration runs to be learned, so a longer run catches what comes only now and then. <strong>30 S is too short for most places</strong>: of two fixed cameras at one place a run of 30 s learned one, and the other alerted twice afterwards (measured, 15 Nov 2026).</li>
+<li>Watch the countdown. DONE ends it early and keeps what it learned. CANCEL ends it and keeps nothing of it.</li>
+<li>Read the result on the Cal screen.</li>
+</ol>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>The Cal screen says</th>
+<th>Meaning</th>
+<th>Do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&quot;LAST RUN: 3 NEW, 1 STRONGER&quot;</td>
+<td>Three signals were learned, and one that was known before was heard stronger and is now known up to that level</td>
+<td>Read the lines under it</td>
+</tr>
+<tr>
+<td>A line such as &quot;VID F8 5880 MHz&quot; or &quot;SUB 866.4 MHz&quot;</td>
+<td>One known signal: its tag, its name, its frequency</td>
+<td>Ask of each line whether it could be one of your own. If it is, <a href="#forget-a-known-signal">forget it</a> and calibrate again with it switched off</td>
+</tr>
+<tr>
+<td>&quot;1 AIRCRAFT SIGNAL: NOT LEARNED&quot;</td>
+<td>An aircraft was broadcasting Remote ID, or DJI's own element, during the run. That is never learned, and the unit alerted for it meanwhile</td>
+<td>Nothing, unless it is one of yours: then it was on when you thought it was off</td>
+</tr>
+<tr>
+<td>&quot;NO ROOM FOR 2 MORE: FORGET SOME&quot;</td>
+<td>The list holds thirty-two and was full</td>
+<td>FORGET ALL and calibrate again</td>
+</tr>
+<tr>
+<td>&quot;PORT B NOT UP: NOT LEARNED FROM&quot;</td>
+<td>That sensor was missing for some of the run</td>
+<td>Get the port UP and calibrate again</td>
+</tr>
+<tr>
+<td>&quot;NO ALERT FOR 4 MIN 12 S&quot;</td>
+<td>How long the unit has raised no alert since</td>
+<td>Watch it grow for a few minutes</td>
+</tr>
+</tbody>
+</table></div>
+<p>If something still alerts, calibrate again: what is known stays known and the new signal is added.</p>
+<ul>
+<li><strong>A fixed wireless camera on a video channel is a real video signal.</strong> The unit is right to alert for it, nothing can tell it from an aircraft's by its radio signal, and a calibration is what it is for.</li>
+<li>What a known signal costs: on its frequency, or under its name, the unit alerts only for something more than 10 dB stronger than what was learned. A list with a video channel in it makes the unit less keen on that channel. A learned control link makes it less keen on every control link of the same packet rate.</li>
+</ul>
+<p>Measured on 14 and 15 Nov 2026 on two units, from the screen and over USB. Not checked: a place with more than a few signals.</p>
+<h2 id="forget-a-known-signal">Forget a known signal</h2>
+<ul>
+<li><strong>All of them:</strong> CAL, then FORGET ALL.</li>
+<li><strong>One of them:</strong> over USB, by its key. List the known signals, find the key, forget it:</li>
+</ul>
+<pre><code>python3 tools/north.py --port PORT get what=known
+python3 tools/north.py --port PORT calibrate 'forget=va|5880'
+</code></pre>
+<p><a href="#change-a-setting-over-usb">Change a setting over USB</a> says what <code>PORT</code> is. The keys are listed in alert_logic. The screen has no button for forgetting one signal.</p>
+<h2 id="choose-a-sensitivity">Choose a sensitivity</h2>
+<p>There are three levels, low, medium and high, for each of three kinds of sensor. A new unit is at medium.</p>
+<p><strong>Where:</strong> in the app, for all sensors at once or for the RF sensor, the Remote ID sensor and the 868 MHz watch one by one (android). Or <a href="#change-a-setting-over-usb">over USB</a> with <code>sens_rf</code>, <code>sens_rid</code> and <code>sens_sg</code>. The unit's own screen cannot change it.</p>
+<p><strong>For few false alarms,</strong> try these in order. Each costs less reach than the next.</p>
+<ol>
+<li><a href="#calibrate-a-place-and-check-what-was-learned">Calibrate</a>. It silences the signals of the place and nothing else.</li>
+<li><a href="#mute-a-signal-and-take-the-mute-off">Mute</a> the one signal, for a time.</li>
+<li>Set that kind of sensor to low. What low costs, measured on one bench on 14 Nov 2026 (master):</li>
+</ol>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Sensor</th>
+<th>At low</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF sensor</td>
+<td>A signal must stand 10 dB over the noise where medium asks for 8, which costs about 4 dB of reach. A control link must stand for 15 s and a video carrier for 3 s before it is more than a notice</td>
+</tr>
+<tr>
+<td>Remote ID sensor</td>
+<td>An ID, a Wi-Fi link or an aircraft's network that is heard only weaker than -85 dBm is a notice. Other Wi-Fi names are not listed at all</td>
+</tr>
+<tr>
+<td>868 MHz watch</td>
+<td>A signal must be heard in four different seconds of eight where medium asks for three, and control must stand for 10 s where medium asks for 8</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>For reach,</strong> high changes less than its name says. On that bench a threshold of 6 dB bought nothing over 8 dB for video. On 868 MHz high is medium without the 8 s that control must stand. High also lists every device that only asks for a drone's network. Most of what has been measured so far was measured at medium.</p>
+<p>One run of each level is all there is. Read the figures as that.</p>
+<h2 id="mute-a-signal-and-take-the-mute-off">Mute a signal, and take the mute off</h2>
+<ol>
+<li>On the Home screen, tap the signal's row.</li>
+<li>Press 15 MIN or 1 HOUR to mute this one signal. Or press the button that names its kind, such as ALL VIDEO or ALL SUB-GHZ, to mute every signal of that kind for an hour.</li>
+<li>The row turns faint, its tag reads <code>MUTE</code>, and the minutes left stand where the bars were.</li>
+</ol>
+<p>To take it off: tap the row, then UNMUTE. That lifts every mute that covers the signal, its own and one of its whole kind.</p>
+<ul>
+<li>A mute ends by itself when its time is up, and a restart of the master forgets every mute.</li>
+<li>A mute of a whole kind makes the unit deaf to that kind for the hour, an aircraft that arrives later included. Prefer the one signal.</li>
+<li>A longer mute than an hour is possible over USB: the <code>mute</code> command in the master's README.</li>
+</ul>
+<h2 id="follow-one-signal">Follow one signal</h2>
+<p>To find out whether one signal grows or fades as you move.</p>
+<ol>
+<li>Tap the signal's row. FOLLOW is lit if the signal can be followed: a video carrier or a verified control link on 2.4 GHz, on a unit whose RF sensor was built with the seeker (read: RF sensor's page).</li>
+<li>Press FOLLOW. The Seeker screen comes up within a moment.</li>
+<li>Move, and watch the arrow and the number. The number is the change in decibels since you pressed FOLLOW. The beeps come faster as the signal grows.</li>
+<li>Press STOP when you are done. From the screen a seek ends by itself after 300 s.</li>
+</ol>
+<p>While you follow one signal the RF sensor does nothing else: no new control or video link is noticed until the seek ends. Remote ID and the 868 MHz watch go on.</p>
+<p>The number is the level at the unit and not a distance. Not measured: a walk towards a real transmitter (master).</p>
+<h2 id="pair-a-phone-and-forget-phones">Pair a phone, and forget phones</h2>
+<p><strong>Pair:</strong></p>
+<ol>
+<li>On the master press PHONE and read the name, as in <code>UAS Master-1A2B</code>.</li>
+<li>In the app, find the master and choose that name.</li>
+<li>On the master press ALLOW when PAIRING REQUEST comes up. It waits 20 s.</li>
+<li>Type the six digits on the phone promptly.</li>
+</ol>
+<p>Pressing PAIR A PHONE first also works, and makes the phone find the master sooner. It opens pairing for 120 s and disconnects a phone that is connected.</p>
+<p><strong>Forget:</strong> PHONE, then FORGET PHONES. All remembered phones are forgotten and the connection ends.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Trouble</th>
+<th>Do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The code ran out before you typed it</td>
+<td>Choose the master in the app again. ALLOW keeps pairing open for 120 s, so no second press is needed</td>
+</tr>
+<tr>
+<td>NO ROOM LEFT: FORGET PHONES FIRST</td>
+<td>Three phones are remembered. FORGET PHONES, then pair again</td>
+</tr>
+<tr>
+<td>The phone was paired, has forgotten the master, and now fails</td>
+<td>Press PAIR A PHONE on the master, then choose the master in the app</td>
+</tr>
+<tr>
+<td>The master has forgotten the phone, and the phone still tries</td>
+<td>Remove the master in the phone's Bluetooth settings, then pair again</td>
+</tr>
+<tr>
+<td>The request does not come up</td>
+<td>During an alert at DETECT or above the screen does not change by itself. Press PHONE</td>
+</tr>
+</tbody>
+</table></div>
+<p>The rules behind this table are in the master's README.</p>
+<h2 id="record-a-walk-and-read-it-afterwards">Record a walk and read it afterwards</h2>
+<p>A walk shows how the level of a signal falls as the unit is carried away from its transmitter, down to where nothing is listed any more.</p>
+<p><strong>Before:</strong></p>
+<ol>
+<li>Put a card in and switch on. The Ports screen should read &quot;CARD: 3 LINES&quot; or so, in green.</li>
+<li>Connect a phone once, so that the master's clock is set and the lines carry the time of day.</li>
+<li>Switch the walk log on, <a href="#change-a-setting-over-usb">over USB</a>:</li>
+</ol>
+<pre><code>python3 tools/north.py --port PORT set 'cfg={&quot;walk_log&quot;:true}'
+</code></pre>
+<p>The Ports screen now reads WALK LOG where it read CARD. The setting stays over a restart.</p>
+<p><strong>The walk:</strong> leave the transmitter where it is and switched on. Carry the unit away and back. Write down the time of what you do, by the same clock the master shows: when the transmitter came on, where you turned.</p>
+<p><strong>After:</strong></p>
+<ol>
+<li>Switch the walk log off again, with <code>false</code> in the same command. With it on, the card is a record of where the unit has been for as long as it is given positions.</li>
+<li>Switch the master off and take the card out.</li>
+<li>On a computer:</li>
+</ol>
+<pre><code>python3 tools/walk_report.py UAS00012.LOG
+python3 tools/walk_report.py --home last --step 10 --csv walk.csv UAS00012.LOG
+</code></pre>
+<p>The report is a table of time, distance and level: what the master listed, and what the sensors still tracked while the master listed nothing. It prints no position. Its options are in tools.</p>
+<p><strong>Distances need positions.</strong> The report takes them from the positions a phone gave the master during the walk: the mark in the top bar is lit while it has one. Without them a walk gives levels against time and no distances. These are distances you walked, between places the phone measured. The unit works out no distance from a signal.</p>
+<p>A log can have a gap of a minute where a write to the card failed (measured, 15 Nov 2026): the master lets the card go and begins a new file a minute later.</p>
+<h2 id="read-the-log-on-the-card">Read the log on the card</h2>
+<ol>
+<li>Switch the master off before you take the card out. Pulling a card from a running master has not been tried.</li>
+<li>On a computer, open the folder <code>UASLOG</code>. The files are <code>UAS00001.LOG</code> and up, a new one for each start of the master. The highest number is the newest.</li>
+<li>Each line is one record as text. The first line of a file says which firmware and settings wrote it. An <code>alert</code> line holds the level and every signal in the list at that moment. Lines carry <code>time</code> once the clock was set.</li>
+<li>For a table in place of the lines, give the file to <code>tools/walk_report.py</code> as above.</li>
+</ol>
+<ul>
+<li><strong>The card holds places and times</strong> if the master was given positions: inside every alert, and with the walk log on in every position line. Treat a card as you treat a phone.</li>
+<li>The master never deletes anything. Remove old logs on the computer. With less than 8 MB of room the card is called full and nothing more is written.</li>
+<li>What each kind of line holds is in the master's README.</li>
+</ul>
+<h2 id="change-a-setting-over-usb">Change a setting over USB</h2>
+<p>For the settings the unit's screen cannot change: <code>volume</code>, <code>brightness</code>, <code>region</code>, <code>walk_log</code>, and the sensitivity levels if you have no phone.</p>
+<p>You need a computer with Python 3 and pyserial, the project's tools, and a USB cable to the master's own socket. <code>PORT</code> is the master's serial device: a name like <code>/dev/cu.usbmodem1101</code> on a Mac or <code>/dev/ttyACM0</code> on Linux. It changes with the socket the cable is in.</p>
+<pre><code>python3 tools/north.py --port PORT get what=settings
+python3 tools/north.py --port PORT set 'cfg={&quot;volume&quot;:40}'
+python3 tools/north.py --port PORT set 'cfg={&quot;brightness&quot;:70}'
+python3 tools/north.py --port PORT set 'cfg={&quot;sens_rf&quot;:&quot;low&quot;}'
+</code></pre>
+<ul>
+<li>The first line prints the settings as they are. The others print the master's answer, which ends in <code>&quot;ok&quot;:true</code> when the setting was taken.</li>
+<li>Write the part in braces without spaces.</li>
+<li>The master keeps settings in its flash over a restart.</li>
+<li>Every setting and its limits: the master's README.</li>
+</ul>
+<p>Not checked for this guide: whether opening the port restarts the master on every computer. A restart forgets every mute and begins a new log file.</p>
+<h2 id="update-the-masters-firmware">Update the master's firmware</h2>
+<p>The master is flashed from a computer through its own USB-C socket.</p>
+<ol>
+<li>Install ESP-IDF 5.5.1, which is what the firmware was built with.</li>
+<li>Build and flash as the master's README shows: one command to build, one to flash.</li>
+<li>Afterwards, press PORTS. The line at the foot gives the version: &quot;MASTER 0.12.0&quot;.</li>
+<li>Check what the master kept: the known signals on the Cal screen, the settings, and that your phone still connects. Whether all three survive every update has not been checked. A firmware that cannot read the stored settings starts from the defaults.</li>
+</ol>
+<p>Flash the normal build. A bench build is for tests: it writes pairing codes to its log, and whoever reads its USB port can pair a phone with it (master).</p>
+<h2 id="update-a-sensors-firmware">Update a sensor's firmware</h2>
+<p>Today each sensor is flashed through its own USB-C socket. The master takes no part.</p>
+<ol>
+<li>Keep the cell plugged in, or the master's USB, while you flash, so that the rest of the unit has a real supply. A cable in the sensor alone starves the master and the other sensor (read: wiring guide).</li>
+<li>Build and flash as that sensor's README says: Remote ID sensor, RF sensor. Both warn against letting the flashing tool reset the chip in the usual way. Read that part before the first flash.</li>
+<li>Afterwards, press PORTS on the master. The port should be UP, and FIRMWARE under it should give the new version.</li>
+</ol>
+<p>Each sensor's own page has the steps: Remote ID sensor, RF sensor. A way to update a sensor through the master, from a computer or from the card, is being built and is not in this firmware.</p>
+<h2 id="prepare-for-a-demonstration-or-a-test-day">Prepare for a demonstration or a test day</h2>
+<p>Everything here is something the firmware does. It is a list to work through, and it does not make the unit hear what it cannot hear: read <a href="index.html#what-it-can-and-cannot-detect-today">What it can and cannot detect today</a> against the aircraft you expect.</p>
+<p><strong>The day before</strong></p>
+<ul>
+<li>☐ Charge the cell: a USB supply of 2 A or more in the master's own socket. While it charges, the battery picture reads full whatever the charge is. Unplug to read it. How long a full cell runs the unit has not been measured: bring a USB supply for a long day.</li>
+<li>☐ All three antennas are fitted and tight.</li>
+<li>☐ The card is FAT32, has room, and held a log the last time: the Ports screen reads &quot;CARD: … LINES&quot; in green.</li>
+<li>☐ Press PORTS and write down the three versions: the master's at the foot, and FIRMWARE under each port. A result means little without them.</li>
+<li>☐ The phone is paired, and the phone's own clock is right. The master takes its time from the phone.</li>
+<li>☐ Settle the sensitivity levels and the volume now. A new unit has medium and a volume of 60.</li>
+</ul>
+<p><strong>On the spot, before anything flies</strong></p>
+<ul>
+<li>☐ Put the unit where its antennas are as high and as free as they can be carried or stood: on a pole or a stand rather than on the ground or in a bag. Height is the cheapest reach there is for a transmitter near the ground (estimated; not measured with this unit).</li>
+<li>☐ Switch on. SCANNING with a green dot. On the Ports screen each sensor reads UP, RADIO RUNNING and SETTINGS OK, and RECORDS LOST is not climbing.</li>
+<li>☐ Connect the phone once. The top bar shows the time.</li>
+<li>☐ Press CAL, then FORGET ALL: what the unit learned somewhere else does not belong here.</li>
+<li>☐ Ask for every aircraft, remote control, video transmitter and pair of goggles of the day to be switched off. <strong>Then calibrate, 60 S at least and 5 MIN if the place is busy. Not 30 S.</strong></li>
+<li>☐ Read what was learned, line by line. Each line stays quiet from now on unless it comes back more than 10 dB stronger. A fixed wireless camera on a video channel is the usual thing to find, and a calibration is what it is for. If a line is one of the day's own aircraft or remote controls, forget it and calibrate again with it off.</li>
+<li>☐ Watch &quot;NO ALERT FOR&quot; on the Cal screen for some minutes, then Home: CLEAR, with grey KNOWN rows at most. If something still alerts, calibrate again, or mute that one signal for an hour.</li>
+</ul>
+<p><strong>While it runs</strong></p>
+<ul>
+<li>☐ Do not calibrate while an aircraft or a remote control of the day is on the air. A video transmitter, a control link and a Wi-Fi aircraft would be learned.</li>
+<li>☐ Read the pictures, not only the level: a red controller alone is a remote control that is switched on, and a red camera alone is a video transmitter. Neither says that something is flying.</li>
+<li>☐ Do not follow a signal unless that is what you mean to show: following pauses the survey of 2.4 and 5.8 GHz.</li>
+<li>☐ A tap on the left side of Home silences one alert until something new arrives. It does not mute anything.</li>
+<li>☐ Do not restart the master without need. A restart forgets every mute and begins a new log file. Known signals and settings are kept.</li>
+<li>☐ Glance at the light at the lower left now and then. Yellow or red means a sensor is not listening.</li>
+</ul>
+<p><strong>Afterwards</strong></p>
+<ul>
+<li>☐ Switch off, and unplug the cell.</li>
+<li>☐ Take the card. Its logs hold what was listed and when, for whoever asks later.</li>
+</ul>
+<h2 id="when-something-is-wrong">When something is wrong</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>Likely cause</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The screen is dim</td>
+<td>30 s without a touch</td>
+<td>Touch it. It never goes fully dark by itself</td>
+</tr>
+<tr>
+<td>The screen is dark and stays dark</td>
+<td>The master is off, the cell is empty, or <code>brightness</code> is 0</td>
+<td>Hold the power button for about 1 s. Plug USB into the master's socket. Set <code>brightness</code> over USB</td>
+</tr>
+<tr>
+<td>SCANNING in yellow with a warning sign, and a port that reads DOWN with NO SENSOR</td>
+<td>The sensor on that port does not answer: not powered, asleep, hung, being flashed, or a wire is off</td>
+<td>Power the whole unit down: unplug the cell and every USB cable, wait a few seconds, connect again. The power button alone does not restart a sensor</td>
+</tr>
+<tr>
+<td>NO RADIO in red</td>
+<td>Neither sensor answers</td>
+<td>The same</td>
+</tr>
+<tr>
+<td>A port reads FAULT in red</td>
+<td>The sensor reports that its radio failed, or it does not take the master's commands</td>
+<td>Wait a minute: the master restarts a sensor with a failed radio by itself, up to three times. If it stays red, power the whole unit down as above</td>
+</tr>
+<tr>
+<td>A port stays yellow</td>
+<td>The sensor answers and does not get to listening</td>
+<td>Read RADIO and SETTINGS on the Ports screen. A setting that was refused points to a sensor build that does not fit this master: note both versions</td>
+</tr>
+<tr>
+<td>RECORDS LOST keeps climbing</td>
+<td>A poor connection between that sensor and the master</td>
+<td>Check the wires of that port (wiring guide)</td>
+</tr>
+<tr>
+<td>No sound at an alert</td>
+<td>The alert was silenced by a tap, <code>volume</code> is 0, or the signal is a notice, known or muted</td>
+<td>Look for SOUND OFF at the left. Check the row: a yellow tag, KNOWN and <code>MUTE</code> are silent. Check <code>volume</code> over USB</td>
+</tr>
+<tr>
+<td>The sound became quiet</td>
+<td>After 6 s an alert goes on at about a third of the loudness</td>
+<td>Nothing. Something new starts it afresh</td>
+</tr>
+<tr>
+<td>An alert with nothing flying</td>
+<td>A signal of the place: very often a fixed wireless camera (video), or a remote control that is switched on (control)</td>
+<td>The pictures and the row say which kind. Calibrate with your own equipment off, or tap the row and mute it for a time</td>
+</tr>
+<tr>
+<td>A short <code>CTRL</code> alert, some seconds long, with no remote control switched on</td>
+<td>Something nearby sends for a moment with the beat of a control link. Seen about three times in a day on one unit (measured, 15 Nov 2026); what sent it is not known</td>
+<td>If it keeps coming, set the RF sensor to low: a control link must then stand for 15 s before it alerts</td>
+</tr>
+<tr>
+<td>A <code>SUB</code> row comes and goes with nothing flying</td>
+<td>Another user of the 868 MHz band</td>
+<td>It is a notice unless it becomes control. Calibrate, or mute ALL SUB-GHZ for the hour</td>
+</tr>
+<tr>
+<td>A <code>HOP</code> row that never becomes <code>CTRL</code></td>
+<td>Hopping energy on 2.4 GHz that the sensor cannot verify as a control link: Bluetooth, or a control system whose packet rate it does not look for</td>
+<td>It is a notice and stays silent. Nothing to do</td>
+</tr>
+<tr>
+<td>A <code>WIFI</code> row with a drone maker's name</td>
+<td>A network or device that looks like drone equipment and may be anything's. A phone's hotspot with such a name does too</td>
+<td>It is a notice. It becomes a <code>LINK</code> and an alert once data flows both ways</td>
+</tr>
+<tr>
+<td>A <code>WAIR</code> row, and no aircraft of yours</td>
+<td>A Wi-Fi network that names itself as an aircraft's: someone's aircraft is switched on nearby, or a network carries such a name</td>
+<td>If it belongs to the place, calibrate: it is then known</td>
+</tr>
+<tr>
+<td>A grey KNOWN row turned red</td>
+<td>The known signal came back more than 10 dB stronger than it was learned</td>
+<td>Treat it as an alert. If it is the same harmless thing, now nearer, calibrate again: it is then known up to the new level</td>
+</tr>
+<tr>
+<td>Your own aircraft raises no alert</td>
+<td>It was on during a calibration; or it is muted; or the unit does not hear its kind of link</td>
+<td>Look for a KNOWN or <code>MUTE</code> row with its name. <a href="#forget-a-known-signal">Forget it</a> or unmute it. Then read <a href="index.html#what-it-can-and-cannot-detect-today">What it can and cannot detect today</a></td>
+</tr>
+<tr>
+<td>The aircraft's picture is not red although something flies</td>
+<td>Only its remote control was heard (the controller is red), or only its video (the camera is red)</td>
+<td>That is the picture saying what was heard. Both together turn the whole aircraft red</td>
+</tr>
+<tr>
+<td>FOLLOW is not lit</td>
+<td>The signal is of a kind that cannot be followed, or the RF sensor was built without the seeker</td>
+<td>See <a href="#follow-one-signal">Follow one signal</a></td>
+</tr>
+<tr>
+<td>The time is wrong, or ends in UTC</td>
+<td>The master takes its time from the phone. The phone's clock is wrong, or the program that set the time did not give its zone</td>
+<td>Set the phone's clock right and connect again</td>
+</tr>
+<tr>
+<td>Dashes where the time would be</td>
+<td>Nobody has set the clock since the master started. It does not keep the time while it is off</td>
+<td>Connect the phone</td>
+</tr>
+<tr>
+<td>CARD NOT USABLE</td>
+<td>The card is not FAT16 or FAT32. Cards over 32 GB are sold in another format</td>
+<td>Format it FAT32 on a computer</td>
+</tr>
+<tr>
+<td>CARD FULL</td>
+<td>Less than 8 MB of room</td>
+<td>Remove old logs on a computer</td>
+</tr>
+<tr>
+<td>NO CARD with a card in the slot</td>
+<td>The card does not answer. The master looks again once a minute</td>
+<td>Switch off, take the card out and put it in again, switch on</td>
+</tr>
+<tr>
+<td>A gap of a minute in a log, and a new file after it</td>
+<td>A write to the card failed and the master let the card go for a minute</td>
+<td>Nothing can be done on the unit. Keep the files together: the next one carries on</td>
+</tr>
+<tr>
+<td>The battery picture is always full</td>
+<td>A cell on charge reads higher than it is</td>
+<td>Unplug USB to read the charge</td>
+</tr>
+<tr>
+<td>The unit restarts over and over</td>
+<td>It is fed from a sensor's USB socket alone</td>
+<td>Plug the cell in, or USB into the master's own socket</td>
+</tr>
+</tbody>
+</table></div>
+<p>If a sensor's own light could help: each sensor board has a small light whose pattern says what that sensor sees. The patterns are on the sensors' own pages, Remote ID sensor and RF sensor. Not all of them have been checked by eye.</p>
+
+</main>
+<footer class="wrap foot">
+  <p>The detector only listens for aircraft and their controllers. Its sensors never transmit, and the master's one radio link is Bluetooth to a phone.</p>
+  <p class="foot-small">From the project's guide at commit 50ae254.</p>
+</footer>
+</body>
+</html>

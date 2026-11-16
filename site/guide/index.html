@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User guide · UAS Detector</title>
+<meta name="description" content="What a finished unit shows, sounds and logs, what each button does, and what the unit can and cannot detect today. Written for a person who has the unit in the hand and did not build it.">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body class="guide-page">
+<header class="top wrap">
+  <div class="brand">
+    <span class="brand-name">UAS DETECTOR</span>
+    <span class="brand-what">USER GUIDE</span>
+  </div>
+  <nav class="guide-nav" aria-label="Guide">
+    <a href="index.html" aria-current="page">Guide</a>
+    <a href="quickstart.html">Quickstart</a>
+    <a href="how-to.html">How-to</a>
+    <a href="../">Firmware</a>
+  </nav>
+</header>
+<main class="wrap guide">
+<p class="guide-note">This guide describes master firmware 0.12.0, the landscape screen: the <strong>Beta</strong> on the <a href="../">firmware page</a>. The Alpha has the earlier, upright screen. Commands below that name <code>tools/</code> need the project's own tools, which are not public yet.</p>
+<h1 id="user-guide">User guide</h1>
+<p>What a finished unit shows, sounds and logs, what each button does, and what the unit can and cannot detect today. Written for a person who has the unit in the hand and did not build it.</p>
+<ul>
+<li><strong>What this describes:</strong> master firmware 0.12.0 (the landscape screen), Remote ID sensor 0.7.3 and the RF sensor with its check of the packet rate, as they stood on 16 Nov 2026</li>
+<li>Shorter: the <a href="quickstart.html">quickstart</a> takes a unit to its first alert, and the <a href="how-to.html">how-to pages</a> have one task each</li>
+<li>Each sensor has a page of its own: the Remote ID sensor and the RF sensor. A page on power and charging and a page on the phone app are still to come</li>
+<li>Where this guide and the firmware disagree, the firmware is right and the guide has the mistake</li>
+</ul>
+<p>How sure each statement is:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Word</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>read</td>
+<td>Taken from the firmware's code, or from the page or maker's page linked beside it</td>
+</tr>
+<tr>
+<td>measured</td>
+<td>Seen on hardware. The page linked beside it says when and on what</td>
+</tr>
+<tr>
+<td>estimated</td>
+<td>Worked out from those figures</td>
+</tr>
+</tbody>
+</table></div>
+<p>A statement about what the unit does is read unless it says otherwise. The pictures of the screens are painted on a computer by the firmware's own painting code (how); they are what the panel is sent, and they are not photographs of a unit.</p>
+<h2 id="contents">Contents</h2>
+<ol>
+<li><a href="#what-the-unit-is">What the unit is</a></li>
+<li><a href="#the-parts">The parts</a></li>
+<li><a href="#switching-on-and-off">Switching on and off</a></li>
+<li><a href="#the-screen">The screen</a></li>
+<li><a href="#the-four-levels">The four levels</a></li>
+<li><a href="#what-is-in-the-list">What is in the list</a></li>
+<li><a href="#sounds">Sounds</a></li>
+<li><a href="#sensitivity-and-the-other-settings">Sensitivity and the other settings</a></li>
+<li><a href="#calibration-the-signals-of-a-place">Calibration: the signals of a place</a></li>
+<li><a href="#mutes">Mutes</a></li>
+<li><a href="#following-one-signal">Following one signal</a></li>
+<li><a href="#the-phone">The phone</a></li>
+<li><a href="#the-receivers-position">The receiver's position</a></li>
+<li><a href="#the-card-and-the-walk-log">The card and the walk log</a></li>
+<li><a href="#the-battery-reading">The battery reading</a></li>
+<li><a href="#when-part-of-the-unit-is-not-working">When part of the unit is not working</a></li>
+<li><a href="#what-it-can-and-cannot-detect-today">What it can and cannot detect today</a></li>
+<li><a href="#glossary">Glossary</a></li>
+</ol>
+<h2 id="what-the-unit-is">What the unit is</h2>
+<p>A passive detector for small unmanned aircraft and their remote controls. Two sensor boards listen. The master board turns what they report into one alert level, shows it on its screen, sounds it, writes it to a card and sends it to a phone.</p>
+<ul>
+<li><strong>It only receives.</strong> Neither sensor transmits on any radio. The master transmits one thing: its Bluetooth link to the phone.</li>
+<li><strong>It reports signals.</strong> An alert says that a signal of a kind that aircraft and their remote controls use is on the air where the unit stands. A remote control that lies switched on raises the same alert as one that is flying something.</li>
+<li><strong>It does not measure distance or direction.</strong> The screen shows how strong a signal is at the unit and whether it grows or fades. It does not turn that into metres, and nothing on it is a range.</li>
+<li><strong>CLEAR does not prove that nothing flies.</strong> The sensors move from channel to channel and miss what happens where they are not listening, and several kinds of aircraft are not heard at all. <a href="#what-it-can-and-cannot-detect-today">What it can and cannot detect today</a> lists them.</li>
+<li><strong>What a broadcast says is a claim.</strong> A Remote ID names an aircraft and the unit shows that name. It does not check it.</li>
+</ul>
+<h2 id="the-parts">The parts</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What it does for you</th>
+<th>Its own page</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The master: a Waveshare ESP32-C5-Touch-LCD-2.8</td>
+<td>The touch screen, the speaker, the card slot, the Bluetooth link, the power button. It holds the cell</td>
+<td>master</td>
+</tr>
+<tr>
+<td>The Remote ID sensor (RID sensor): a Seeed XIAO ESP32-C5 on a Wio-SX1262 board</td>
+<td>Listens on Wi-Fi and Bluetooth for Remote ID, for Wi-Fi networks and links that look like a drone's, and watches one channel of the 868 MHz band</td>
+<td>Its user's page</td>
+</tr>
+<tr>
+<td>The RF sensor: a second XIAO ESP32-C5</td>
+<td>Surveys 2.4 and 5.8 GHz for control links and video links</td>
+<td>Its user's page</td>
+</tr>
+<tr>
+<td>Three antennas</td>
+<td>One for 2.4 and 5.8 GHz on each sensor, one for 868 MHz on the Wio board. A sensor without its antenna looks alive and hears almost nothing (read: wiring guide)</td>
+<td>wiring guide</td>
+</tr>
+<tr>
+<td>A 3.7 V lithium polymer cell</td>
+<td>Runs the unit away from USB</td>
+<td>wiring guide</td>
+</tr>
+<tr>
+<td>A TF card, if you want a log</td>
+<td>Keeps what was detected, when, and where the unit was</td>
+<td><a href="#the-card-and-the-walk-log">The card and the walk log</a></td>
+</tr>
+<tr>
+<td>A phone with the app, if you want one</td>
+<td>Shows the alerts, notifies you, sets the sensitivity and the master's clock</td>
+<td>android</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The two sensors hang on the master's two ports, A and B. Which sensor sits on which port does not matter: each one tells the master what it is.</li>
+<li>A user's page for power and charging and one for the phone app are still to come. Until they exist, the wiring guide and the app's own notes in the right-hand column are what there is.</li>
+</ul>
+<h2 id="switching-on-and-off">Switching on and off</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>To</th>
+<th>Do</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Switch on</td>
+<td>Hold the master's power button for about 1 s (read: wiring guide)</td>
+<td>Four rising notes, then the Home screen. Each sensor is usually linked within a second or two, and the light at the lower left then reads SCANNING in green (measured, 14 Nov 2026: master)</td>
+</tr>
+<tr>
+<td>Switch off</td>
+<td>Hold the button for about 2 s (read: the same page)</td>
+<td>The screen goes dark</td>
+</tr>
+<tr>
+<td>Run from USB</td>
+<td>Plug a supply into the master's own USB-C socket</td>
+<td>The unit runs from it and the cell charges at 0.27 A (read: wiring guide). Use a supply rated 2 A or more and a short cable; a computer's port may sag (estimated there)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Three things to know:</p>
+<ul>
+<li><strong>The button does not switch the sensors.</strong> They stay powered for as long as a cell or any USB cable is connected. A dark screen does not mean that the unit is off.</li>
+<li><strong>Unplug the cell when the unit is not in use.</strong> The sensors are meant to sleep while the master is off, and that sleep has not been tested on either sensor (read: both sensor READMEs). Two sensors that never sleep empty a 1000 mAh cell in hours to a day (estimated: wiring guide).</li>
+<li><strong>Do not run the unit from a sensor's USB socket alone.</strong> The master and the other sensor then starve and restart over and over (read: case 5 of the wiring guide's table).</li>
+</ul>
+<p>Not measured: how long a full cell runs the unit. The master gives no warning when the cell is low and switches nothing off: watch the <a href="#the-battery-reading">battery picture</a>.</p>
+<p>The master does not keep the time while it is off. After every start its clock is unset until a phone connects or a program on USB sets it.</p>
+<h2 id="the-screen">The screen</h2>
+<p>The screen is a landscape page with a touch panel. A bar runs along the top of every screen and four buttons along the foot: HOME, PORTS, PHONE and CAL. Two more screens have no button and come up by themselves: a signal's own screen after a tap on its row, and the Seeker screen while one signal is followed.</p>
+<p><strong>The screen gives no distance.</strong> Nothing on it is a range, and nothing on it should be read as one.</p>
+<h3 id="the-top-bar">The top bar</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>On it</th>
+<th>What it says</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ANUBIS</td>
+<td>The name of the screen's design. It is the same on every unit</td>
+</tr>
+<tr>
+<td>The time</td>
+<td>The master's clock, once a phone or a computer has set it. Dashes until then. It ends in UTC when whoever set it did not say where its wall clock stands</td>
+</tr>
+<tr>
+<td><code>BT</code></td>
+<td>The phone link: blue while a paired phone is connected, yellow while pairing is open or a phone asks to pair, grey otherwise</td>
+</tr>
+<tr>
+<td>A small position mark</td>
+<td>Lit while a phone gives the unit its position, struck out while none does</td>
+</tr>
+<tr>
+<td>A picture of a cell</td>
+<td>The charge. Red when it is low. See <a href="#the-battery-reading">The battery reading</a></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="home">Home</h3>
+<p><img src="img/home_clear.png" alt="Home with nothing on the air: CLEAR in green, the three pictures unlit, no signals" loading="lazy" width="640" height="480" /></p>
+<p><strong>The left side</strong> is the level.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Part</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The ladder</td>
+<td>Three steps: green for CLEAR, yellow for NOTICE, red for DETECT and CONFIRMED. The step of the level in force is lit, and the level stands beside it in large letters. At CONFIRMED the red step blinks</td>
+</tr>
+<tr>
+<td>At NOTICE</td>
+<td>A word or two for each of the first two things to look at: HOPPING, DRONE NAME, WI-FI CARRIER, SUB-GHZ</td>
+</tr>
+<tr>
+<td>At DETECT and CONFIRMED</td>
+<td>Four short lines: MAKER (filled in when DJI's own element was heard), REMOTE ID (ON when one is heard), VIDEO (LIVE when one is heard) and RATE, which the unit has nothing to put in yet. Under them the button TAP TO SILENCE</td>
+</tr>
+<tr>
+<td>With only known signals</td>
+<td>&quot;3 KNOWN SIGNALS&quot; over CLEAR</td>
+</tr>
+<tr>
+<td>The light at the foot</td>
+<td>SCANNING in green while every sensor is at work. SCANNING in yellow with a warning sign when the unit hears less than it should: a sensor is missing, the 868 MHz radio has stopped, or one signal is being followed. NO RADIO in red when no sensor is up</td>
+</tr>
+</tbody>
+</table></div>
+<p>A tap anywhere on the left side silences the alert that is showing, until something new arrives: another signal, a higher level, or another kind of evidence. It then reads SOUND OFF.</p>
+<p><strong>The right side</strong> is what was heard.</p>
+<p>DETECTED holds three pictures: an aircraft, the sign of a Wi-Fi link, and a controller. <strong>Each is red only for what was heard</strong>, so the pictures say what kind of thing is on the air and not more than that.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>What is heard, at DETECT or above</th>
+<th>The aircraft</th>
+<th>The Wi-Fi sign</th>
+<th>The controller</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A control link alone</td>
+<td>Not lit</td>
+<td>Not lit</td>
+<td>Red</td>
+<td><img src="img/home_control_alone.png" alt="A control link alone: the controller is red" loading="lazy" width="640" height="480" /></td>
+</tr>
+<tr>
+<td>Video alone</td>
+<td>Grey, with its camera in red</td>
+<td>Not lit</td>
+<td>Not lit</td>
+<td><img src="img/home_detect_video.png" alt="Video alone: a grey aircraft with a red camera" loading="lazy" width="640" height="480" /></td>
+</tr>
+<tr>
+<td>Control and video together</td>
+<td>Red</td>
+<td>Not lit</td>
+<td>Red</td>
+<td><img src="img/home_control_and_video.png" alt="Control and video: aircraft and controller red, CONFIRMED" loading="lazy" width="640" height="480" /></td>
+</tr>
+<tr>
+<td>Remote ID, or DJI's own element</td>
+<td>Red</td>
+<td>Not lit</td>
+<td>Red if a control link is heard too</td>
+<td><img src="img/home_detect_remote_id.png" alt="Remote ID: the aircraft is red" loading="lazy" width="640" height="480" /></td>
+</tr>
+<tr>
+<td>An aircraft's own Wi-Fi network</td>
+<td>Red</td>
+<td>Red</td>
+<td>Not lit</td>
+<td><img src="img/home_aircraft_network.png" alt="An aircraft's own network: aircraft and Wi-Fi sign red, a WAIR row" loading="lazy" width="640" height="480" /></td>
+</tr>
+<tr>
+<td>A Wi-Fi link in use</td>
+<td>Red</td>
+<td>Red</td>
+<td>Red</td>
+<td><img src="img/home_wifi_link.png" alt="A Wi-Fi link: all three red" loading="lazy" width="640" height="480" /></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>A red controller alone means a remote control is switched on.</strong> It does not say that anything is flying.</li>
+<li><strong>A red camera alone means a video transmitter is on the air.</strong> That may be an aircraft's. It may also be a fixed wireless camera, which sends the same kind of signal.</li>
+<li>A signal that is only a notice lights nothing in red: at most the sign's dot or a picture turns yellow. A known or a muted signal lights nothing.</li>
+<li>The two cards under the pictures, HOVERING and LAUNCHED NEARBY, are dim on every screen. The unit has nothing to put in them yet.</li>
+</ul>
+<p>SIGNALS holds up to four rows, one for each signal, in this order: what raises the alert, then notices, then known signals, then muted ones. With more, the last line says &quot;+2 MORE&quot;.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Part of a row</th>
+<th>What it shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The tag</td>
+<td>Which kind it is: <code>RID</code>, <code>DJI</code>, <code>LINK</code>, <code>WAIR</code>, <code>WIFI</code>, <code>CTRL</code>, <code>HOP</code>, <code>VID</code> or <code>SUB</code>. Red for a signal that raises an alert, yellow for a notice, grey for a known signal, and <code>MUTE</code> for a muted one</td>
+</tr>
+<tr>
+<td>The name</td>
+<td>An aircraft's ID, a network's name, an FPV channel such as F8, a packet rate such as 250 Hz. FAINT behind a video signal's name means the sensor no longer calls it video and still tracks something on its frequency</td>
+</tr>
+<tr>
+<td>Five bars</td>
+<td>How strong it is at the unit. One bar is 10 dB, or 6 dB for control and video on 2.4 and 5.8 GHz. A known row says KNOWN in their place, and a muted row the minutes left</td>
+</tr>
+<tr>
+<td><code>&gt;</code></td>
+<td>A tap on the row brings up that signal's own screen, which also says what it is and where</td>
+</tr>
+</tbody>
+</table></div>
+<p><a href="#what-is-in-the-list">What is in the list</a> explains every kind.</p>
+<p><img src="img/home_notice.png" alt="Home at NOTICE: a hopping row and a Wi-Fi name, both yellow" loading="lazy" width="640" height="480" /></p>
+<p><img src="img/home_known.png" alt="Home with only known signals: CLEAR, three grey rows" loading="lazy" width="640" height="480" /></p>
+<p><img src="img/home_muted_times.png" alt="Home with a Remote ID, a notice and two muted rows" loading="lazy" width="640" height="480" /></p>
+<h3 id="a-signals-own-screen">A signal's own screen</h3>
+<p>A tap on a row brings it up.</p>
+<p><img src="img/signal_video.png" alt="A video signal's own screen with FOLLOW, the two mutes, ALL VIDEO and BACK" loading="lazy" width="640" height="480" /></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>On it</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The tag, and what and where</td>
+<td>&quot;analog video 5880 MHz&quot;, &quot;control 2.4 GHz&quot;, &quot;aircraft network ch 6&quot;, &quot;wi-fi name ch 11&quot; and the like</td>
+</tr>
+<tr>
+<td>Its name and bars</td>
+<td>As on its row</td>
+</tr>
+<tr>
+<td>Its level in figures</td>
+<td>&quot;36 DB OVER NOISE&quot; for what the RF sensor hears, a level in dBm for the Remote ID sensor and the 868 MHz watch</td>
+</tr>
+<tr>
+<td>How it stands</td>
+<td>RAISES AN ALERT; A NOTICE: LISTED, AND SILENT; known; MUTED with the minutes left; or NO LONGER ON THE LIST</td>
+</tr>
+<tr>
+<td>FOLLOW</td>
+<td>Begins <a href="#following-one-signal">following this signal</a>. Lit only for a signal that can be followed</td>
+</tr>
+<tr>
+<td>15 MIN, 1 HOUR</td>
+<td><a href="#mutes">Mute</a> this signal for that long</td>
+</tr>
+<tr>
+<td>UNMUTE</td>
+<td>Stands in their place while the signal is muted, and lifts every mute that covers it</td>
+</tr>
+<tr>
+<td>ALL VIDEO, ALL CONTROL and the like</td>
+<td>Mute every signal of its kind for an hour</td>
+</tr>
+<tr>
+<td>BACK</td>
+<td>The list again. The buttons at the foot do the same</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="ports">Ports</h3>
+<p>One block for each of the master's two ports.</p>
+<p><img src="img/sensors_card_walk_log.png" alt="Ports: both sensors up, and the walk log's line count" loading="lazy" width="640" height="480" /></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Line</th>
+<th>Read it as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UP, in green, at the top right</td>
+<td>The sensor is linked and listening. Yellow words mean it is starting or has paused for a moment, FAULT in red that it reports a failure, DOWN in grey that nothing is heard from it. <a href="#when-part-of-the-unit-is-not-working">When part of the unit is not working</a> has the states</td>
+</tr>
+<tr>
+<td>RF SENSOR, RID SENSOR, NO SENSOR</td>
+<td>Which sensor has reported on this port</td>
+</tr>
+<tr>
+<td>FIRMWARE</td>
+<td>That sensor's version</td>
+</tr>
+<tr>
+<td>RADIO RUNNING</td>
+<td>The sensor is listening. HELD and STOPPED mean it is not, ERROR that its radio has failed</td>
+</tr>
+<tr>
+<td>SETTINGS OK</td>
+<td>The sensor took the master's settings</td>
+</tr>
+<tr>
+<td>RECORDS LOST 0</td>
+<td>Records that went missing between the sensor and the master. A number that keeps growing means a bad connection</td>
+</tr>
+<tr>
+<td>SUPPLY 4014 mV</td>
+<td>The voltage the sensor measures on its supply. A check of the supply, not a battery gauge</td>
+</tr>
+</tbody>
+</table></div>
+<p>At the foot: the master's version on the left; on the right the card, &quot;CARD: 16 LINES&quot; in green while a log is written, &quot;WALK LOG: 16 LINES&quot; while the walk log is on, CARD FULL, CARD NOT USABLE or NO CARD. With a cell fitted, its voltage and the charge it stands for are there too.</p>
+<p><img src="img/sensors_one_missing.png" alt="Ports with one sensor missing and one at fault" loading="lazy" width="640" height="480" /></p>
+<h3 id="phone">Phone</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>The screen shows</th>
+<th>Meaning and buttons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CONNECTED or NOT CONNECTED, how many phones are remembered, and the name this master has in the phone app, as in <code>UAS Master-1A2B</code></td>
+<td>PAIR A PHONE opens pairing for 120 s. FORGET PHONES forgets every remembered phone and ends the connection</td>
+</tr>
+<tr>
+<td>PAIRING IS OPEN, with the seconds left</td>
+<td>Choose the master in the app now. CANCEL closes pairing</td>
+</tr>
+<tr>
+<td>PAIRING REQUEST</td>
+<td>A phone has tried to pair. ALLOW shows the code; REFUSE turns the phone away. The request waits 20 s</td>
+</tr>
+<tr>
+<td>TYPE THIS CODE ON THE PHONE, and six digits</td>
+<td>The code is good for this one pairing. CANCEL ends it</td>
+</tr>
+<tr>
+<td>NO ROOM LEFT: FORGET PHONES FIRST</td>
+<td>Three phones are remembered and the master never drops one to make room</td>
+</tr>
+<tr>
+<td>BLUETOOTH IS OFF</td>
+<td>The Bluetooth link did not start</td>
+</tr>
+</tbody>
+</table></div>
+<p>The pairing request and the code come up by themselves, whatever screen is showing, except over an alert at DETECT or above. The PHONE button is then one tap away. <a href="#the-phone">The phone</a> has the rest.</p>
+<h3 id="cal">Cal</h3>
+<p>For <a href="#calibration-the-signals-of-a-place">calibration</a>.</p>
+<p><img src="img/cal_done.png" alt="Cal between calibrations: the no-alert line, the last run, the known signals and the four buttons" loading="lazy" width="640" height="480" /></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>The screen shows</th>
+<th>Buttons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>How many signals are known, what the last run did (&quot;LAST RUN: 4 NEW, 0 STRONGER&quot;), and the known signals a line each</td>
+<td>30 S, 60 S and 5 MIN begin a calibration of that length. FORGET ALL empties the list</td>
+</tr>
+<tr>
+<td>&quot;NO ALERT FOR 4 MIN 12 S&quot; in green</td>
+<td>How long the unit has raised no alert, counted afresh from the start, from the end of a calibration and from a forget. ALERT NOW in red while one stands. It is the line to watch after a calibration</td>
+</tr>
+<tr>
+<td>While one runs: CALIBRATING, the seconds left, and what it has learned so far</td>
+<td>DONE ends it and keeps what it learned. CANCEL ends it and keeps nothing of it</td>
+</tr>
+<tr>
+<td>&quot;1 AIRCRAFT SIGNAL: NOT LEARNED&quot; in yellow</td>
+<td>A Remote ID or DJI's own element was on the air during the calibration. Such a signal is never learned: see below</td>
+</tr>
+<tr>
+<td>&quot;NO ROOM FOR 2 MORE: FORGET SOME&quot;</td>
+<td>The list holds thirty-two signals and was full</td>
+</tr>
+<tr>
+<td>&quot;PORT B NOT UP: NOT LEARNED FROM&quot;</td>
+<td>A sensor was missing during the run, so nothing of its kind was learned</td>
+</tr>
+</tbody>
+</table></div>
+<p>The yellow line KEEP DRONES AND REMOTES OFF MEANWHILE is the rule that matters: a video transmitter, a remote control and an aircraft's own Wi-Fi network that are on the air during a calibration are learned.</p>
+<p><img src="img/cal_running_aircraft.png" alt="Cal while a calibration runs, with an aircraft's broadcast on the air" loading="lazy" width="640" height="480" /></p>
+<h3 id="the-seeker-screen">The Seeker screen</h3>
+<p>Up for as long as one signal is <a href="#following-one-signal">followed</a>, whoever began it.</p>
+<p><img src="img/seek_video_stronger.png" alt="The Seeker screen: an arrow, the change since the start, a bar, and what following costs" loading="lazy" width="640" height="480" /></p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>On it</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SEEKING and seconds</td>
+<td>How long the seek may still last</td>
+</tr>
+<tr>
+<td>The signal's name and what it is</td>
+<td>As on its row. For analog video also PAL or NTSC once the sensor has worked it out</td>
+</tr>
+<tr>
+<td>An arrow and a number, &quot;+3.5 dB&quot;, SINCE THE START</td>
+<td>Up and green: the signal is growing. Down: fading. The number is the change since the seek began</td>
+</tr>
+<tr>
+<td>A bar, and &quot;28 DB OVER NOISE&quot;</td>
+<td>The signal over the noise, with a white mark at its highest so far</td>
+</tr>
+<tr>
+<td>STRONGER, WEAKER, STEADY, SIGNAL LOST, TUNING TO THE SIGNAL</td>
+<td>The same in a word</td>
+</tr>
+<tr>
+<td>SURVEY PAUSED ON 2.4 AND 5.8 GHZ and REMOTE ID IS STILL WATCHED</td>
+<td>What following costs: see below</td>
+</tr>
+<tr>
+<td>STOP</td>
+<td>Ends the seek. So does any button at the foot</td>
+</tr>
+</tbody>
+</table></div>
+<p>A tap on the number silences the sound, as a tap on the left side of Home does.</p>
+<h3 id="the-backlight">The backlight</h3>
+<p>After 30 s without a touch the backlight drops to a fifth of its setting. A touch brings it back, and so do an alert at DETECT or above and a pairing. It never goes out by itself: only a <code>brightness</code> setting of 0 switches it off.</p>
+<h2 id="the-four-levels">The four levels</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Level</th>
+<th>On the ladder</th>
+<th>Sound</th>
+<th>What raises it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLEAR</td>
+<td>Green</td>
+<td>None</td>
+<td>Nothing is in the list, or only known and muted signals</td>
+</tr>
+<tr>
+<td>NOTICE</td>
+<td>Yellow</td>
+<td>None</td>
+<td>Something is on the air that could belong to a drone and is not enough by itself: a network with a drone maker's name, hopping energy on 2.4 GHz, a Wi-Fi carrier on 5.8 GHz, bursts on 868 MHz. Also a stronger kind of evidence that is too weak or too new for the sensitivity level in use</td>
+</tr>
+<tr>
+<td>DETECT</td>
+<td>Red</td>
+<td>Beeps</td>
+<td>One signal of a kind that is evidence by itself: Remote ID, DJI's own element, a Wi-Fi link, an aircraft's own Wi-Fi network, a verified control link on 2.4 GHz, video on 5.8 GHz, a control link on 868 MHz</td>
+</tr>
+<tr>
+<td>CONFIRMED</td>
+<td>Red, blinking</td>
+<td>A warble</td>
+<td>Two such signals of different families, each last seen within 10 s of the other</td>
+</tr>
+</tbody>
+</table></div>
+<p>The four families are beacon (Remote ID and DJI's element), Wi-Fi link (a link, and an aircraft's own network), control (on 2.4 GHz and on 868 MHz) and video (analog and digital). Two video signals do not confirm each other; a video signal and a control link do.</p>
+<ul>
+<li><strong>DETECT says that a signal of that kind is on the air. It does not say that an aircraft is flying.</strong> A remote control that lies switched on raises it, and so does a fixed wireless camera on a video channel. The <a href="#home">pictures</a> say which kind was heard.</li>
+<li>A muted or a known signal never raises the level.</li>
+<li>A signal that counts only as a notice confirms nothing. Neither does a video signal that is listed as FAINT.</li>
+<li>A signal stays in the list for a while after it was last heard: 30 s for Remote ID, DJI's element, a Wi-Fi link and a Wi-Fi name; 10 s for video; 5 s on 868 MHz; 3 s for control, hopping and a Wi-Fi carrier. The RF sensor itself holds a control link for 8 to 11 s after its last packet (read: RF sensor's notes), so a control row goes 11 to 14 s after the transmitter is switched off (estimated from those two figures).</li>
+</ul>
+<p>The rules are in alert_logic.</p>
+<h2 id="what-is-in-the-list">What is in the list</h2>
+<p>The tag is on the signal's row. The words are on its own screen, one tap away.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Words on its own screen</th>
+<th>What it is</th>
+<th>Alone it gives</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RID</code></td>
+<td>&quot;wifi ch 6&quot;, &quot;nan&quot;, &quot;bt4&quot;, &quot;bt5&quot;, &quot;bt-lr&quot;, &quot;fr&quot;</td>
+<td>An aircraft that broadcasts its identity, which is called Remote ID. The words say how it arrived: in a Wi-Fi beacon, in a Wi-Fi NAN frame, by Bluetooth 4, Bluetooth 5 or Bluetooth long range, or in the French format. The name is the ID it claims</td>
+<td>DETECT</td>
+</tr>
+<tr>
+<td><code>DJI</code></td>
+<td>&quot;dji element ch 6&quot;</td>
+<td>A Wi-Fi frame that carries DJI's own element. The sensor recognises it and does not decode it. Never tried with a real aircraft</td>
+<td>DETECT</td>
+</tr>
+<tr>
+<td><code>LINK</code></td>
+<td>&quot;wi-fi link ch 36&quot;</td>
+<td>A device with a drone maker's address or a drone's network name, with data flowing both ways between it and another device: a link in use</td>
+<td>DETECT</td>
+</tr>
+<tr>
+<td><code>WAIR</code></td>
+<td>&quot;aircraft network ch 6&quot;</td>
+<td>A Wi-Fi network that names itself with a name aircraft give their own networks, such as <code>TELLO</code> or <code>HolyStone</code>: an aircraft that is flown from a phone and is switched on. The names are on the Remote ID sensor's list. A name can be changed or copied</td>
+<td>DETECT</td>
+</tr>
+<tr>
+<td><code>WIFI</code></td>
+<td>&quot;wi-fi name ch 11&quot;</td>
+<td>A network or a device that looks like drone equipment by its maker's name or address, where the name could be anything's: a phone's hotspot named <code>DJI-something</code> reads the same. Also a controller's network, and a phone that only asks for an aircraft's network</td>
+<td>NOTICE</td>
+</tr>
+<tr>
+<td><code>CTRL</code></td>
+<td>&quot;control 2.4 GHz&quot;</td>
+<td>A hopping transmitter on 2.4 GHz whose packets keep to a rate that a control link has. The name is the rate, such as &quot;250 Hz&quot;</td>
+<td>DETECT</td>
+</tr>
+<tr>
+<td><code>HOP</code></td>
+<td>&quot;hopping 2.4 GHz&quot;</td>
+<td>Hopping bursts on 2.4 GHz that the sensor could not verify as a control link. Bluetooth hops too. The name is the bursts a second</td>
+<td>NOTICE</td>
+</tr>
+<tr>
+<td><code>VID</code></td>
+<td>&quot;analog video 5880 MHz&quot;, &quot;digital video 5807 MHz&quot;</td>
+<td>A steady carrier on 5.8 GHz with the shape of a video transmitter. The name is its FPV channel, such as F8, or its frequency</td>
+<td>DETECT</td>
+</tr>
+<tr>
+<td><code>VID</code>, with FAINT</td>
+<td>&quot;faint analog 5880 MHz&quot;</td>
+<td>A video signal the sensor no longer calls video, while it still tracks something on that frequency. The row stays for a minute at most after it was last video</td>
+<td>DETECT, and it confirms nothing</td>
+</tr>
+<tr>
+<td><code>WIFI</code></td>
+<td>&quot;wi-fi carrier 5805 MHz&quot;</td>
+<td>A wide carrier on 5.8 GHz that the sensor takes for a Wi-Fi network</td>
+<td>NOTICE</td>
+</tr>
+<tr>
+<td><code>SUB</code></td>
+<td>&quot;control 866 MHz&quot;</td>
+<td>The kind of signal ExpressLRS uses on 868 MHz (LoRa), heard on the watched channel in several different seconds. The name gives the channel and the signal's speed, as in &quot;866.4 MHz SF9&quot;</td>
+<td>DETECT</td>
+</tr>
+<tr>
+<td><code>SUB</code></td>
+<td>&quot;bursts 866 MHz&quot;</td>
+<td>Such detections, too few to be a link</td>
+<td>NOTICE</td>
+</tr>
+</tbody>
+</table></div>
+<p>A row that should give DETECT and has a yellow tag is being held back by the <a href="#sensitivity-and-the-other-settings">sensitivity level</a>: too weak, or not there for long enough yet. Nothing is hidden for that reason. It stays in the list as a notice.</p>
+<h2 id="sounds">Sounds</h2>
+<p>The sounds work as a radar detector's do: the pitch says which family the strongest signal belongs to, and the pace how strong it is.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Pitch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Beacon: Remote ID, DJI's element</td>
+<td>Lowest</td>
+</tr>
+<tr>
+<td>Wi-Fi link, and an aircraft's own network</td>
+<td>Higher</td>
+</tr>
+<tr>
+<td>Video</td>
+<td>Higher still</td>
+</tr>
+<tr>
+<td>Control</td>
+<td>Highest</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>DETECT:</strong> three quick beeps, then single beeps: one every 1.6 s for the weakest signal, one every 0.22 s for the strongest.</li>
+<li><strong>CONFIRMED:</strong> a warble between two pitches, long at first and short after that, with shorter pauses the stronger the signal.</li>
+<li><strong>NOTICE and CLEAR</strong> are silent.</li>
+<li>After 6 s an alert goes on at about a third of the loudness. A higher level, another signal or another family starts it afresh.</li>
+<li>A tap on the left side of Home silences the alert that is showing until something new arrives.</li>
+<li>At power-up the four pitches play once, lowest first.</li>
+</ul>
+<p>The pitches in hertz and the rest are in the master's README.</p>
+<h2 id="sensitivity-and-the-other-settings">Sensitivity and the other settings</h2>
+<p>Each kind of sensor has a level of its own: low, medium or high. Medium is what a new unit has. High is for the most reliable detection. Low is for few false alarms, while a signal that is really there is still detected.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Sensor</th>
+<th>What a lower level changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RF sensor: control and video on 2.4 and 5.8 GHz</td>
+<td>A signal must stand further over the sensor's noise. At low a video carrier must also stand for 3 s and a control link for 15 s before it is more than a notice</td>
+</tr>
+<tr>
+<td>Remote ID sensor</td>
+<td>A decoded ID counts at every level. At low an ID, a Wi-Fi link or an aircraft's network that is heard only weakly is a notice and makes no sound, and the other Wi-Fi names are not listed at all. At high the list also holds devices that only ask for a drone's network</td>
+</tr>
+<tr>
+<td>The 868 MHz watch</td>
+<td>At every level the sensor checks each detection three times and all three must agree. The level changes in how many different seconds a signal must be heard, and how long control must stand before it is more than a notice: 10 s at low, 8 s at medium, not at all at high</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li>The values behind each level, and where they were measured, are in the master's README.</li>
+<li>Except for those Wi-Fi names, a lower level hides nothing: what is too weak for it stays in the list as a notice.</li>
+<li>Measured on one bench on 14 Nov 2026, one run each: every test source was detected at every level, and no level reported anything in two quiet minutes (master).</li>
+</ul>
+<p><strong>The unit's own screen has no page for settings.</strong> They are changed from a phone or from a computer on the master's USB socket, and the master keeps them in its flash over a restart (measured: master).</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>What it does</th>
+<th>Where to change it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The three sensitivity levels</td>
+<td>Above</td>
+<td>The app, for all sensors or for each (android); or over USB</td>
+</tr>
+<tr>
+<td><code>volume</code></td>
+<td>The loudness, 0 to 100; 0 is silent. A new unit has 60</td>
+<td>Over USB</td>
+</tr>
+<tr>
+<td><code>brightness</code></td>
+<td>The backlight, 0 to 100; 0 is off. A new unit has 70</td>
+<td>Over USB</td>
+</tr>
+<tr>
+<td><code>region</code></td>
+<td><code>DE</code> or <code>US</code>: which channel of the sub-GHz band is watched, 866.425 MHz or 915.5 MHz, and the country the Remote ID sensor is told. The second channel is read from a channel plan and has never been tried</td>
+<td>Over USB</td>
+</tr>
+<tr>
+<td><code>walk_log</code></td>
+<td>Whether the card also holds what the sensors measure: see <a href="#the-card-and-the-walk-log">the walk log</a></td>
+<td>Over USB</td>
+</tr>
+</tbody>
+</table></div>
+<p><a href="how-to.html#change-a-setting-over-usb">How to change a setting over USB</a> has the commands.</p>
+<h2 id="calibration-the-signals-of-a-place">Calibration: the signals of a place</h2>
+<p>A place has signals of its own that are not a drone and that no rule can tell from one: a neighbour's telemetry on 868 MHz, a wireless camera on 5.8 GHz, a network with a drone's name. A calibration learns them. <strong>Calibrate on arrival at every new place.</strong></p>
+<ul>
+<li><strong>What it does.</strong> For 30 s, 60 s or 5 minutes the master learns the signals that are in the list or appear: what each is, and the strongest it was heard. From then on such a signal is <strong>known</strong>. It stays in the list in grey, says KNOWN, and raises neither the level nor a sound, with no time limit.</li>
+<li><strong>Take 60 s or 5 minutes.</strong> A signal has to show while the calibration runs to be learned. One that comes and goes, or that the sensor calls video only some of the time, is missed by a short run and alerts later (measured, 15 Nov 2026: of two fixed cameras at one place, a run of 30 s learned one, and the other alerted twice afterwards).</li>
+<li><strong>A fixed wireless camera is what a calibration is for.</strong> It is a real video transmitter, the unit is right to list it, and no check can tell it from an aircraft's. Once it is learned it stays quiet (measured, the same day).</li>
+<li><strong>What an aircraft broadcasts about itself is never learned:</strong> Remote ID and DJI's own element. Such a signal alerts during a calibration as at any other time, and the Cal screen says in yellow how many there were.</li>
+<li><strong>Everything else on the air is learned, so switch your own equipment off first:</strong> every aircraft, remote control, video transmitter and pair of goggles. A video transmitter and a control link are learned like any other carrier and any other hopping link. So is the Wi-Fi network of an aircraft that is flown from a phone, and its link.</li>
+<li><strong>A known signal does not hide a stronger one on the same frequency.</strong> What was learned holds up to the level it was learned at and 10 dB more. Heard stronger than that, the signal alerts as it would have, until it has been back under that level for 10 s.</li>
+<li><strong>What counts as the same signal.</strong> A video or Wi-Fi carrier by its frequency, a control link on 2.4 GHz by its sensor and packet rate, the 868 MHz channel as a whole, everything else by its name or address. On 868 MHz, bursts that were learned stay quiet as bursts and do not hide a control link that comes onto the channel later.</li>
+<li><strong>Thirty-two signals are kept.</strong> They are stored in the master and are there after a restart. A calibration only adds: what was known before stays known. FORGET ALL on the Cal screen empties the list, which is the thing to do when the unit has moved to another place.</li>
+<li>A calibration cannot run while a signal is followed, and the other way round.</li>
+</ul>
+<p>Afterwards, read what was learned, line by line, and watch the green line &quot;NO ALERT FOR&quot; grow.</p>
+<p>Not checked: a calibration in a place with more than a few signals, and whether 10 dB is the right margin everywhere (read: master, which has the full rules).</p>
+<h2 id="mutes">Mutes</h2>
+<p>A mute is for a time, where a calibration is for a place. It needs no quiet minute to learn in, and it ends by itself.</p>
+<ul>
+<li>From a signal's own screen: 15 MIN or 1 HOUR for this one signal, or the button that names its kind (ALL VIDEO, ALL SUB-GHZ and so on) for every signal of that kind, for an hour.</li>
+<li>A muted signal stays in the list, faint, with <code>MUTE</code> for its tag and the minutes left. It raises neither the level nor a sound.</li>
+<li><strong>One signal is the signal, whatever the sensor calls it the next time.</strong> A muted carrier is muted as analog video, as digital video and as a Wi-Fi carrier near that frequency. A muted control link on 2.4 GHz is also muted while it is only hopping energy.</li>
+<li>UNMUTE on the signal's screen lifts every mute that covers it.</li>
+<li><strong>A restart of the master forgets every mute.</strong> Known signals survive a restart; mutes do not.</li>
+<li>The list holds twelve mutes, and a mute of a whole kind takes up to three of them.</li>
+</ul>
+<p>A mute of a whole kind makes the unit deaf to that kind for the hour. Muting ALL VIDEO because of one camera also mutes the video of an aircraft that arrives later. Mute the one signal where you can.</p>
+<h2 id="following-one-signal">Following one signal</h2>
+<p>The list says that something is there. Following answers the next question, several times a second: is this one signal getting stronger or weaker? It is what the firmware calls seeker mode.</p>
+<ul>
+<li><strong>What can be followed:</strong> a video carrier and a verified control link on 2.4 GHz. Nothing the Remote ID sensor hears can be.</li>
+<li><strong>It needs an RF sensor build that has the seeker in it</strong> (read: RF sensor's page). With a build that lacks it, FOLLOW stays unlit.</li>
+<li><strong>How:</strong> tap the signal's row, then FOLLOW. The Seeker screen comes up. From the screen a seek lasts 300 s at most; STOP or any button at the foot ends it sooner.</li>
+<li><strong>What it costs:</strong> while one signal is followed, the RF sensor does nothing else. The survey of 2.4 and 5.8 GHz stands still, the signals it had listed are held as they were, and a new control or video link is not noticed until the seek ends. Remote ID and the 868 MHz watch go on.</li>
+<li><strong>The sound</strong> changes to short beeps in the pitch of what is followed, faster the stronger the signal is: 1.3 s apart with no signal over the noise, 0.2 s apart at 50 dB.</li>
+<li><strong>What the number means:</strong> decibels of change since the seek began. It is the level at the unit and not a distance. Walking towards a transmitter usually makes it rise, and walls, bodies and reflections make it fall and rise as well.</li>
+</ul>
+<p>Measured on a bench on 14 Nov 2026 with stepped signals; not measured on a walk towards a real transmitter (master).</p>
+<h2 id="the-phone">The phone</h2>
+<p>The unit works without a phone. A phone adds three things: alerts where you are looking, the sensitivity levels, and the time of day, which the master takes from the phone at every connection.</p>
+<p>What the app shows and how to use it is the app's own page: android. This is the master's side.</p>
+<ul>
+<li><strong>The link</strong> is Bluetooth LE. In the app the master is called <code>UAS Master-</code> and four characters of its own, as the Phone screen shows.</li>
+<li><strong>Pairing</strong> takes someone at the master. Either the phone simply tries, the master shows &quot;Pairing request&quot;, and you press ALLOW. Or you press PAIR A PHONE first. Then the master shows a six-digit code and you type it on the phone. Android ends a pairing about half a minute after it began (measured, 14 Nov 2026: master), so type promptly. ALLOW keeps pairing open for 120 s, so a second try needs no second press.</li>
+<li><strong>Three phones are remembered</strong>, also over a restart. A remembered phone reconnects by itself without a code.</li>
+<li><strong>One phone at a time.</strong> While one is connected, others cannot find the master. PAIR A PHONE disconnects the phone that is connected.</li>
+<li><strong>FORGET PHONES</strong> forgets all of them.</li>
+<li><strong>The clock.</strong> The master takes whatever time the phone sends. A phone whose own clock is wrong sets the master's clock wrong, and every line of the log with it (measured, the same page: a phone 23.6 days behind).</li>
+<li><strong>What a phone gets</strong> is what the screen has: the level, the list, the state of the ports, the battery. Only a paired phone gets anything; the link is encrypted.</li>
+</ul>
+<p>Paired and used with one Android phone on 14 Nov 2026 (measured: the same page). Not tried: an iPhone, a second phone beside the first, pairing from across a room.</p>
+<h2 id="the-receivers-position">The receiver's position</h2>
+<p>The master does not know where it is. A phone or a program on USB can tell it, and the master then puts that position into every alert it sends and into the alerts it writes to the card.</p>
+<ul>
+<li><strong>It is the receiver's position</strong>, the place where the unit stood when it heard the signal. Nothing the unit records is the position of an aircraft, and one position with a level is no bearing.</li>
+<li>The position itself is not shown on the screen. The master forgets it after 10 minutes without a new one, and at every restart.</li>
+<li>Whether your app sends the phone's position to the master depends on its version: see the app's notes. The mark in the top bar is lit while the master has one.</li>
+<li>A position is personal data. A card that holds alerts holds the places they were raised at: treat it as you treat a phone.</li>
+</ul>
+<p>The command and its limits are in the master's README.</p>
+<h2 id="the-card-and-the-walk-log">The card and the walk log</h2>
+<p>With a TF card in its slot the master keeps a log of its own: what it detected, when, and, if it was given one, where the unit was. It is there without a phone, and it stays with the unit.</p>
+<ul>
+<li><strong>The card</strong> must be formatted FAT16 or FAT32, which is how cards of up to 32 GB are sold. A larger card comes formatted otherwise and reads as &quot;card not usable&quot; until it is formatted FAT32 on a computer. The master never formats a card and never deletes anything on it.</li>
+<li><strong>Put the card in before you switch on.</strong> The master looks for a card at the start and, while there is none, once a minute. A card put in while the master runs has not been tried (read: master).</li>
+<li><strong>Files</strong> are <code>UASLOG/UAS00001.LOG</code> and up, a new one each time the master starts. With less than 8 MB of room the card is called full and nothing more is written.</li>
+<li><strong>What is written:</strong> which firmware and settings wrote the log, then every alert: at once when the level changes, every 5 s while the level is DETECT or CONFIRMED, once a minute at NOTICE. Nothing while the level is CLEAR. A known or muted signal adds no line by coming and going.</li>
+<li><strong>Times.</strong> Lines carry the time of day once the clock is set. Lines written before that are dated by the time since the start.</li>
+<li><strong>The Ports screen</strong> says how the card stands: &quot;CARD: 16 LINES&quot;, CARD FULL, CARD NOT USABLE or NO CARD.</li>
+<li><strong>If a write to the card fails,</strong> the master lets the card go and looks for it again a minute later, in a new file. A log can so have a gap of a minute (measured, 15 Nov 2026, five times on two units).</li>
+</ul>
+<p><strong>The walk log</strong> is a setting, <code>walk_log</code>, for measuring reception. With it on, the card also holds what the sensors measured, every second, whether or not anything was listed, and every position a client gives. The Ports screen then reads WALK LOG where it read CARD.</p>
+<ul>
+<li>It is off unless somebody sets it, and it stays as it was set over a restart.</li>
+<li>With it on, the card is a record of where the unit has been for as long as it is given positions. Switch it off after the walk.</li>
+<li>Nothing the Remote ID sensor decodes is written by it: those records name other people's aircraft and devices.</li>
+</ul>
+<p><a href="how-to.html#record-a-walk-and-read-it-afterwards">How to record a walk</a> has the steps. The lines themselves are described in the master's README.</p>
+<h2 id="the-battery-reading">The battery reading</h2>
+<p>The picture in the top bar and the figures on the Ports screen come from the voltage of the cell.</p>
+<ul>
+<li>The percentage is an estimate from the usual curve of a 3.7 V lithium polymer cell. It is not calibrated, and it has not been compared with a meter or followed over a discharge (read: master).</li>
+<li><strong>On charge the picture is full or nearly full</strong>, because a cell on charge reads higher than it is. Unplug USB to see the charge.</li>
+<li>Cold, age and load all make a cell read lower than it is.</li>
+<li>A low cell makes no sound, raises no alert and switches nothing off.</li>
+</ul>
+<h2 id="when-part-of-the-unit-is-not-working">When part of the unit is not working</h2>
+<p>The light at the lower left of Home says whether the unit hears all it should, and the Ports screen says how each sensor's port stands.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>State on the Ports screen</th>
+<th>Meaning</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UP, green</td>
+<td>The sensor is linked, has the master's settings, and its radio runs</td>
+<td>Nothing</td>
+</tr>
+<tr>
+<td>JOINED, READY, STARTING, yellow</td>
+<td>The sensor has answered and is being set up. Normal for a second or two after a start</td>
+<td>Wait</td>
+</tr>
+<tr>
+<td>STALE, yellow</td>
+<td>No record from the sensor for 3 s</td>
+<td>Wait. It turns green again when records resume, or grey after 10 s</td>
+</tr>
+<tr>
+<td>DOWN, grey, with NO SENSOR</td>
+<td>Nothing valid from the sensor for 10 s, or nothing since the start</td>
+<td>See below</td>
+</tr>
+<tr>
+<td>FAULT, red</td>
+<td>The sensor reports that its radio failed, or it did not take a command three times, or it is a build this master cannot talk to</td>
+<td>See below</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>While a port is not UP, the unit is deaf to what that sensor hears.</strong> Home's light then reads SCANNING in yellow with a warning sign, or NO RADIO in red when neither sensor is up, and the alert the master sends to the phone says that coverage is reduced.</li>
+<li><strong>A radio fault</strong> is mended by the master where it can be: it tells the sensor to restart 5 s into the fault, again a minute later, and three times at most.</li>
+<li><strong>A port that stays DOWN or FAULT</strong> needs the whole unit off. A hung sensor cannot be power-cycled by the master's button: unplug the cell and every USB cable, wait a few seconds, and connect them again.</li>
+<li><strong>A port that is green may still be partly deaf.</strong> The Remote ID sensor's 868 MHz radio can stop answering while the sensor goes on with Remote ID. The master notices within 10 s and reports reduced coverage.</li>
+<li><strong>While a signal is followed</strong> the survey of 2.4 and 5.8 GHz is paused, which is also reduced coverage. The Seeker screen says so.</li>
+</ul>
+<p>More symptoms and what to do about them: <a href="how-to.html#when-something-is-wrong">When something is wrong</a>.</p>
+<h2 id="what-it-can-and-cannot-detect-today">What it can and cannot detect today</h2>
+<p>By kind of aircraft. &quot;Today&quot; is 16 Nov 2026. <strong>No row is a promise of range.</strong> Each sensor's own page says more: Remote ID sensor, RF sensor.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Kind</th>
+<th>What the unit does</th>
+<th>How sure</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>An aircraft that broadcasts Remote ID on Wi-Fi or Bluetooth</td>
+<td>DETECT, with the ID it claims as the name</td>
+<td><strong>Measured</strong> with the project's own bench transmitter and a made-up identity, 15 Nov 2026: a Wi-Fi beacon on channels 6 and 36, NAN, the French format, Bluetooth 4, and Bluetooth 5 on both of its modes each gave DETECT, within 0.4 to 8 s. <strong>Not measured:</strong> a real aircraft. <strong>Read:</strong> the 5 GHz channels 52 to 144 are not listened to</td>
+</tr>
+<tr>
+<td>A DJI aircraft that does not broadcast Remote ID</td>
+<td>Its own link is not Wi-Fi, and the unit has no decoder for the identity DJI sends inside it. Such an aircraft is listed only if the RF sensor takes its link on 5.8 GHz for digital video. On 2.4 GHz, where that link may equally be, the RF sensor does not look for video</td>
+<td><strong>Read.</strong> Digital video of that kind was shown with a bench signal source on 5.8 GHz only. <strong>No real DJI aircraft has been in front of the unit</strong></td>
+</tr>
+<tr>
+<td>Analog video on 5.8 GHz</td>
+<td>DETECT, named by its FPV channel</td>
+<td><strong>Measured</strong> with a real transmitter, 14 and 15 Nov 2026: listed within seconds beside the unit. On the walks so far it was reported while it stood well over the sensor's noise, 23 dB or more, and not below, and the alert came and went near that level. A fixed wireless camera is listed the same way, and rightly: it is the same kind of transmitter</td>
+</tr>
+<tr>
+<td>Digital video on 5.8 GHz</td>
+<td>DETECT as digital video</td>
+<td><strong>Bench signal source only</strong>; no real transmitter. Of two kinds played on 15 Nov 2026 one was listed after 10 to 13 s and the other was not listed at all. A Wi-Fi network on the upper 5 GHz channels can read as digital video</td>
+</tr>
+<tr>
+<td>ExpressLRS control on 2.4 GHz</td>
+<td>DETECT as &quot;control 2.4 GHz&quot; with its packet rate</td>
+<td><strong>Measured</strong> against a real remote control at its lowest power in the same room, 15 Nov 2026: 250, 333 and 500 Hz verified within about a second, in 99 of 100 looks. It reports the rate it finds and no longer another one</td>
+</tr>
+<tr>
+<td>ExpressLRS control on 868 MHz</td>
+<td>DETECT as &quot;control 866 MHz&quot;</td>
+<td><strong>Measured</strong> against a model of the link played by a bench signal source, 15 Nov 2026; no real transmitter. One channel is watched, which a hopping link visits about one time in thirteen. 915 MHz has never been tried</td>
+</tr>
+<tr>
+<td>Other control systems</td>
+<td>Not known. On 2.4 GHz the RF sensor verifies a control link by its packet rate, at the rates ExpressLRS uses. Another system would be listed as control only if its packets keep to one of those rates, and gives the notice &quot;hopping 2.4 GHz&quot; at most if they do not. On 868 MHz a link that is not LoRa, such as Crossfire's fast mode, is not found</td>
+<td><strong>Read</strong>, and <strong>estimated</strong> from how the check works. No control system other than ExpressLRS has been measured</td>
+</tr>
+<tr>
+<td>An aircraft flown from a phone over ordinary Wi-Fi, with a network name on the sensor's list: Tello, Holy Stone, Parrot and others</td>
+<td>DETECT as soon as its network names itself (<code>WAIR</code>), and as a link once data flows both ways</td>
+<td><strong>Measured</strong> with made-up devices only. The names are <strong>read</strong> from manuals and public lists; no real aircraft of this kind has been in front of the sensor. An aircraft whose owner renamed its network, or whose name is not on the list, is not found</td>
+</tr>
+<tr>
+<td>A device with a drone maker's name or address and nothing more</td>
+<td>NOTICE. DETECT once data flows both ways between it and another device</td>
+<td><strong>Measured</strong> with made-up devices only. A maker's camera or microphone that talks to a phone reads as such a link too; a calibration is how a place is rid of it</td>
+</tr>
+<tr>
+<td>Small DJI aircraft with &quot;enhanced Wi-Fi&quot;: Mavic Mini, Mini SE, Mavic Air of 2018</td>
+<td>Not found by the Remote ID sensor: their Wi-Fi uses channels an ordinary Wi-Fi receiver cannot decode</td>
+<td><strong>Read</strong></td>
+</tr>
+<tr>
+<td>Toys with a radio of their own on 2.4 GHz</td>
+<td>Not known. The notice &quot;hopping 2.4 GHz&quot; at most, unless the packets keep to a rate the sensor looks for</td>
+<td><strong>Estimated</strong>. Not tried</td>
+</tr>
+</tbody>
+</table></div>
+<p>What holds for all rows:</p>
+<ul>
+<li>Real equipment of two kinds has been in front of the unit so far: analog video transmitters and an ExpressLRS remote control. Everything else in this table was tried with bench sources or not at all.</li>
+<li><strong>A verified control link is not proof of an aircraft.</strong> It says that something sends as a remote control does. Short runs of it have been listed with no remote control of ours switched on (measured, 15 Nov 2026: about 15 s, three times in a day). What sent them is not known.</li>
+<li>A level is not a distance. The unit gives no range for any of these.</li>
+<li>The sensors take turns on their channels. A signal that is on the air for a few seconds only can be missed.</li>
+<li>The higher the unit's antennas are carried, the further they hear a transmitter that is near the ground (estimated from how radio waves travel over ground; not measured with this unit).</li>
+</ul>
+<h2 id="glossary">Glossary</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Word</th>
+<th>Meaning here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Remote ID</td>
+<td>A broadcast in which an aircraft names itself, on Wi-Fi or Bluetooth. Rules in several countries require it of many aircraft</td>
+</tr>
+<tr>
+<td>FPV</td>
+<td>First-person view: flying by a live video picture from the aircraft. The video link is usually on 5.8 GHz</td>
+</tr>
+<tr>
+<td>Analog video, digital video</td>
+<td>The two ways an FPV picture is sent. The RF sensor tells them apart by the width and the shape of the carrier</td>
+</tr>
+<tr>
+<td>FPV channel</td>
+<td>A name for a video frequency, a letter and a digit, as in F8 for 5880 MHz</td>
+</tr>
+<tr>
+<td>Control link</td>
+<td>The radio link from a remote control to its aircraft. Most hop between frequencies many times a second</td>
+</tr>
+<tr>
+<td>ExpressLRS</td>
+<td>A widely used open control link, on 2.4 GHz and on 868 or 915 MHz</td>
+</tr>
+<tr>
+<td>Packet rate</td>
+<td>How many packets a second a control link sends. The RF sensor looks for rates from 50 to 500 Hz</td>
+</tr>
+<tr>
+<td>Hopping</td>
+<td>Changing frequency from packet to packet. Control links do it, and so does Bluetooth</td>
+</tr>
+<tr>
+<td>Sub-GHz</td>
+<td>The bands under 1 GHz that control links use: 868 MHz in Europe, 915 MHz in America</td>
+</tr>
+<tr>
+<td>LoRa</td>
+<td>The kind of radio signal ExpressLRS uses on 868 MHz. SF6 to SF9 are four of its speeds</td>
+</tr>
+<tr>
+<td>Carrier</td>
+<td>A steady signal on one frequency, such as a video transmitter's</td>
+</tr>
+<tr>
+<td>dB over noise</td>
+<td>How far a signal stands over the sensor's own noise. More is stronger. It is not a distance</td>
+</tr>
+<tr>
+<td>dBm</td>
+<td>A level of power. -50 dBm is strong, -90 dBm is weak</td>
+</tr>
+<tr>
+<td>Port</td>
+<td>One of the master's two connections for a sensor, A and B</td>
+</tr>
+<tr>
+<td>UP</td>
+<td>A sensor is linked and listening</td>
+</tr>
+<tr>
+<td>Notice</td>
+<td>Something that is listed and neither sounds nor raises an alert</td>
+</tr>
+<tr>
+<td>Family</td>
+<td>One of four groups of evidence: beacon, Wi-Fi link, control, video. Two different families make CONFIRMED</td>
+</tr>
+<tr>
+<td>Aircraft network</td>
+<td>A Wi-Fi network that an aircraft flown from a phone opens itself. Its row has the tag <code>WAIR</code></td>
+</tr>
+<tr>
+<td>Known</td>
+<td>Learned by a calibration: listed in grey, silent</td>
+</tr>
+<tr>
+<td>The pictures</td>
+<td>The aircraft, the Wi-Fi sign and the controller on Home. Each is red only for what was heard</td>
+</tr>
+<tr>
+<td>Muted</td>
+<td>Silenced for a time from the signal's own screen: listed faint, silent</td>
+</tr>
+<tr>
+<td>Faint</td>
+<td>A video signal that is tracked on its frequency and no longer called video</td>
+</tr>
+<tr>
+<td>Follow, seek</td>
+<td>Staying on one signal to see whether it grows or fades</td>
+</tr>
+<tr>
+<td>Coverage</td>
+<td>Whether every sensor is listening. Reduced when a port is not UP, when the 868 MHz radio has stopped, or while a signal is followed</td>
+</tr>
+<tr>
+<td>Walk log</td>
+<td>A setting that makes the card hold what the sensors measure, for measuring reception on a walk</td>
+</tr>
+<tr>
+<td>TF card</td>
+<td>A microSD card</td>
+</tr>
+</tbody>
+</table></div>
+
+</main>
+<footer class="wrap foot">
+  <p>The detector only listens for aircraft and their controllers. Its sensors never transmit, and the master's one radio link is Bluetooth to a phone.</p>
+  <p class="foot-small">From the project's guide at commit 50ae254.</p>
+</footer>
+</body>
+</html>
