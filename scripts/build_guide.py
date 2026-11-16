@@ -232,12 +232,13 @@ TEMPLATE = """<!doctype html>
 </html>
 """
 
-NOTE_UNIT = ("This guide describes master firmware 0.12.0, the landscape screen: the <strong>Beta</strong> on the "
-             "<a href=\"../\">firmware page</a>. The Alpha has the earlier, upright screen. Commands below that name "
-             "<code>tools/</code> need the project's own tools, which are not public yet.")
-NOTE_SENSOR = ("Written by the team that builds this sensor. Where it names an issue, a pull request or a record, those are in the "
-               "project's own repository, which is not public. The <a href=\"../\">firmware page</a> flashes a sensor "
-               "in a browser once its files are in a release: today the Remote ID sensor's are, the RF sensor's are not.")
+NOTE_UNIT = ("This guide applies to master firmware 0.12.0, which is the <strong>Beta</strong> release on the "
+             "<a href=\"../\">firmware page</a>. The Beta has a landscape screen. The Alpha release has a portrait "
+             "screen, so its screens differ from the ones shown here. Commands that start with <code>python3 tools/</code> "
+             "need the project's tools, which aren't publicly available.")
+NOTE_SENSOR = ("The team that builds this sensor wrote this page. The issues, pull requests and records that it names are in "
+               "the project's own repository, which isn't public. The <a href=\"../\">firmware page</a> can flash the "
+               "Remote ID sensor in a browser. It can't flash the RF sensor, because no release has the RF sensor's files.")
 
 NAV = [("index.html", "Guide"), ("quickstart.html", "Quickstart"), ("how-to.html", "How-to"),
        ("remote-id-sensor.html", "Remote ID sensor"), ("rf-sensor.html", "RF sensor")]
