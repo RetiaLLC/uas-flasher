@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The RF sensor: a user&#x27;s page · UAS Detector</title>
+<meta name="description" content="For someone who has the finished unit in hand. The unit as a whole, its screen and the app have their own pages; this one is about the small board that listens for a drone&#x27;s radio links.">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body class="guide-page">
+<header class="top wrap">
+  <div class="brand">
+    <span class="brand-name">UAS DETECTOR</span>
+    <span class="brand-what">USER GUIDE</span>
+  </div>
+  <nav class="guide-nav" aria-label="Guide">
+    <a href="index.html">Guide</a>
+    <a href="quickstart.html">Quickstart</a>
+    <a href="how-to.html">How-to</a>
+    <a href="remote-id-sensor.html">Remote ID sensor</a>
+    <a href="rf-sensor.html" aria-current="page">RF sensor</a>
+    <a href="../">Firmware</a>
+  </nav>
+</header>
+<main class="wrap guide">
+<p class="guide-note">Written by the team that builds this sensor. Where it names an issue, a pull request or a record, those are in the project's own repository, which is not public. The <a href="../">firmware page</a> flashes a sensor in a browser once its files are in a release: today the Remote ID sensor's are, the RF sensor's are not.</p>
+<h1 id="the-rf-sensor-a-users-page">The RF sensor: a user's page</h1>
+<p>For someone who has the finished unit in hand. The unit as a whole, its screen and the app have their own pages; this one is about the small board that listens for a drone's radio links.</p>
+<p>Describes: the build of branch <code>rf/ctl-bluetooth-alias</code> at <code>74a39f3</code> (pull request 43), 15 Nov 2026. How each statement is known is said with it: measured, read (from the code) or estimated. The measurements themselves are in <code>../CONTROL-LINK.md</code>, <code>../SENSOR-LINK.md</code> and <code>../../validation/xiao-sensor2.md</code>.</p>
+<h2 id="1-what-it-is-for-and-what-it-cannot-hear">1. What it is for, and what it cannot hear</h2>
+<p>The RF sensor listens on 2.4 GHz and 5.8 GHz for the two radio links a hobby or FPV drone uses: the <strong>control link</strong> from the pilot's handset, and the <strong>video</strong> the aircraft sends back. It reports what it hears to the master, which decides what to show. It never transmits.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Kind of signal</th>
+<th>What the sensor does</th>
+<th>How this is known</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Analog video on 5.8 GHz</td>
+<td>Reports it as video, with the channel's name (<code>F8</code>, <code>R7</code>)</td>
+<td>Measured with a real transmitter on <code>F8</code>, 13 Nov 2026</td>
+</tr>
+<tr>
+<td>Digital video on 5.8 GHz</td>
+<td>Reports a wide, flat, steady carrier as digital video</td>
+<td>Measured with a bench synthesiser only. No real digital video system has been in front of it</td>
+</tr>
+<tr>
+<td>ExpressLRS control on 2.4 GHz, at 50, 100, 150, 250, 333 and 500 packets a second</td>
+<td>Reports a <strong>verified</strong> control link and its rate</td>
+<td>Measured with one real handset (RadioMaster Zorro), 13 to 15 Nov 2026</td>
+</tr>
+<tr>
+<td>Other control systems on 2.4 GHz (for example Crossfire's, FrSky's, DJI's handset)</td>
+<td>Reports hopping at most, never a verified link, so the master lists nothing</td>
+<td>Read. None has been tried</td>
+</tr>
+<tr>
+<td>Control on 868 or 915 MHz</td>
+<td>Nothing. This board has no radio for it; the Remote ID sensor watches that band</td>
+<td>Read</td>
+</tr>
+<tr>
+<td>DJI's own link (OcuSync) on 5.8 GHz</td>
+<td>As digital video</td>
+<td>Bench synthesiser only</td>
+</tr>
+<tr>
+<td>DJI's own link on 2.4 GHz</td>
+<td>Nothing. <strong>All video is looked for on 5.8 GHz only</strong></td>
+<td>Read</td>
+</tr>
+<tr>
+<td>Wi-Fi</td>
+<td>A network on 2.4 GHz is tracked as a wide carrier and never shown. A busy network on 5.8 GHz is tracked as a wide carrier, marked as Wi-Fi and not called video</td>
+<td>Read; the mark was tried on the bench synthesiser's Wi-Fi only</td>
+</tr>
+<tr>
+<td>Bluetooth</td>
+<td>Counted as background so that it is not taken for a control link. Not reported</td>
+<td>Measured with a synthetic train, 14 Nov 2026</td>
+</tr>
+<tr>
+<td>Remote ID, a drone's Wi-Fi name</td>
+<td>Nothing. That is the Remote ID sensor's work</td>
+<td>Read</td>
+</tr>
+</tbody>
+</table></div>
+<p>On 5.8 GHz it covers about 5650 to 5940 MHz (read). Two of the forty FPV channels, <code>E4</code> and <code>E8</code>, lie at the edges and are out of reach.</p>
+<p><strong>It hears far less far than a drone's own receiver does.</strong> On the one walk so far (14 Nov 2026, measured by the integration session, issue 63) video was reported only while it stood well over the sensor's noise, and control only near the handset. No range in metres has been measured.</p>
+<h2 id="2-quickstart">2. Quickstart</h2>
+<ol>
+<li>
+<p><strong>The antenna.</strong> Fit the antenna to the sensor board's antenna socket before switching on. Without it the sensor hears only what is at arm's length (estimated; not measured).</p>
+</li>
+<li>
+<p><strong>Switch the unit on.</strong> The master starts the sensor. Nothing has to be set on the sensor itself.</p>
+</li>
+<li>
+<p><strong>Look at the sensor's light</strong> (the small light on the sensor board). Read from the code; the maintainer saw &quot;steady&quot; once, the other patterns have not been looked at:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>The light</th>
+<th>Means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dark</td>
+<td>The radio is off: the sensor is asleep, waiting for the master, or in its loader</td>
+</tr>
+<tr>
+<td>A short blink every 2 s</td>
+<td>Listening, nothing found</td>
+</tr>
+<tr>
+<td>Two blinks a second</td>
+<td>A control link</td>
+</tr>
+<tr>
+<td>Five blinks a second</td>
+<td>Video</td>
+</tr>
+<tr>
+<td>Steady</td>
+<td>Both: video and control together</td>
+</tr>
+</tbody>
+</table></div>
+</li>
+<li>
+<p><strong>Look at the master.</strong> Its Ports screen shows the sensor's port as up, with role <code>rf</code>, the firmware's name and radio <code>running</code>. The screens are described in the master's page.</p>
+</li>
+<li>
+<p><strong>See that it hears something.</strong> Switch on an ExpressLRS handset a few steps away, or an analog video transmitter on any channel but <code>E4</code> and <code>E8</code>. Within a few seconds the light changes as in the table and the master shows a detection. Measured beside the bench handset at its lowest power: verified after 1 to 4 s at 250 Hz and faster, up to 12 s at 100 Hz.</p>
+</li>
+</ol>
+<h2 id="3-what-each-thing-it-reports-means">3. What each thing it reports means</h2>
+<p>The master and the app show these in their own words; the names in code style are the sensor's.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>What it means for you</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Verified control</strong> (<code>ctl_verified</code>, with a rate)</td>
+<td>The sensor found bursts that hop across the band and keep an exact beat of 50 to 500 a second, and found them again. This is the sensor's strongest statement about a control link. It says &quot;something sends like an ExpressLRS handset&quot;, not who or where. See the caution below the table</td>
+</tr>
+<tr>
+<td><strong>Hopping without a verified link</strong> (<code>CONTROL</code> unverified, <code>nb_fhss</code>)</td>
+<td>Short bursts hop across 2.4 GHz, but no steady beat was confirmed. Bluetooth does this all day. The master does not alert on it alone. It also shows for up to 10 s after every start of the sensor (measured)</td>
+</tr>
+<tr>
+<td><strong>Analog video</strong> (<code>video_analog</code>, with a channel name)</td>
+<td>A steady carrier of the width and shape of an analog FPV transmitter stands on that channel. The sensor is usually sure of this once it says it</td>
+</tr>
+<tr>
+<td><strong>Digital video</strong> (<code>video_digital</code>)</td>
+<td>A wide, flat carrier stands on 5.8 GHz and does not come and go like Wi-Fi. <code>continuous</code> or <code>tdd</code> says whether it sends all the time or in turns</td>
+</tr>
+<tr>
+<td><strong>A wide carrier</strong> (<code>wb_ofdm</code>)</td>
+<td>Something wide is there that the sensor does not call video: a Wi-Fi network, a weak video signal, or one of the receiver's own humps (section 5). By itself it is not shown</td>
+</tr>
+<tr>
+<td><strong>A faint video item</strong></td>
+<td>The master's word: a signal that was video a moment ago is now only a wide carrier at the same place. The master keeps the item for up to a minute and marks it faint. Usually the transmitter is still there and moving away</td>
+</tr>
+<tr>
+<td><strong>Both at once</strong> (<code>FPV</code>)</td>
+<td>Video and a verified control link together. The master calls this confirmed</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>[!CAUTION]
+A verified control link is not proof of a drone. Measured on 15 Nov 2026 in the lab: with no transmitter of ours on, two sensors a few metres apart both reported a verified link at the same moments, from some other device in the building that sends with the same beat. What that device is was not yet known when this page was written (issue 74).</p>
+</blockquote>
+<p><strong>Following one signal (seeker).</strong> When you ask the master to follow a signal, this sensor stops surveying and stays on that one signal, reporting its strength five times a second. While it does, it finds nothing new, and the master holds everything else as it stood. It goes back to surveying by itself when you leave that screen. The strength is a level that goes up as you come nearer; it is not a distance. Only builds made with the seeker switched on can do this (<code>hello</code> then lists <code>seek</code>); the design is in <code>../SEEKER.md</code>.</p>
+<h2 id="4-how-to">4. How to</h2>
+<h3 id="update-its-firmware">Update its firmware</h3>
+<p>Today this goes through the sensor's own USB socket. Updating through the master is planned (issue 73).</p>
+<p>You need the three files of a build (<code>bootloader.bin</code>, <code>partitions.bin</code>, <code>firmware.bin</code>), a USB-C cable, and a computer with <code>esptool</code> and a serial terminal.</p>
+<ol>
+<li>
+<p>Plug the cable into the <strong>sensor's</strong> USB socket, not the master's. The unit may stay on.</p>
+</li>
+<li>
+<p>Open the sensor's serial port in a terminal and type <code>BOOTLOADER</code>, then Enter. The light goes dark. Close the terminal.</p>
+</li>
+<li>
+<p>Write the files (put your port's name for <code>PORT</code>):</p>
+<pre><code class="language-sh">esptool --chip esp32c5 --port PORT --baud 460800 \
+  --before no-reset --after watchdog-reset \
+  write-flash --flash-mode dio --flash-freq 80m --flash-size 4MB \
+  0x2000 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin
+</code></pre>
+</li>
+<li>
+<p>The sensor restarts by itself and the master's Ports screen shows the new firmware name.</p>
+</li>
+</ol>
+<blockquote>
+<p>[!WARNING]
+<strong>Never let a tool reset this board for you.</strong> The chip on these sensors is revision 1.0. Leave <code>--before no-reset</code> in the line, do not use esptool's default reset or its USB reset, and do not flash it with OpenOCD. Measured on 14 Nov 2026 on a board like it: such a reset left the chip stuck in its loader, and only taking away all power brought it back.</p>
+</blockquote>
+<p>If the write fails halfway, the sensor stays in its loader, dark and silent, until it is written again (measured, 15 Nov 2026). Run step 3 again; step 2 is not needed then.</p>
+<h3 id="run-it-alone-on-usb">Run it alone on USB</h3>
+<p>Plug the sensor into a computer with nothing on its two link pins. After 3 s without a master it starts listening by itself, and the light shows what it finds (read; used this way on the bench since 13 Nov 2026).</p>
+<ul>
+<li><code>INFO</code> in a serial terminal prints the build.</li>
+<li><code>SLTAP 1</code> prints every report as a line of text; <code>SLTAP 0</code> stops that.</li>
+<li>On a <strong>charger</strong> instead of a computer it goes to sleep after 2 s: see section 5.</li>
+</ul>
+<h3 id="the-settings-of-a-measuring-build">The settings of a measuring build</h3>
+<p>A measuring build (made with <code>-DSENSOR_TUNE=1</code>; a normal build does not have this) lets the bench change how the control search works while it runs, to try a change before it is built in:</p>
+<ul>
+<li><code>TUNE?</code> prints the seven numbers in use. <code>TUNE 0 0 0 0 0 0 0</code> is the build's own behaviour.</li>
+<li><code>TUNE 8 18 8 18 0 0 1</code> is the setting tried on 15 Nov 2026: it hears a weaker control link (about 6 dB, measured with a bench source) and asks for one more confirmation before it says verified.</li>
+<li><strong>Every setting is lost when the sensor restarts.</strong> A unit that was tuned and then switched off is a normal unit again.</li>
+</ul>
+<p>These are for people testing the sensor. A user has nothing to set here.</p>
+<h2 id="5-when-something-is-wrong">5. When something is wrong</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>Likely cause</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The port does not come up on the master; the sensor's light is dark</td>
+<td>No power, a loose link wire, the sensor asleep, or the sensor in its loader after an update that failed</td>
+<td>Check the three wires to the master (wiring). Switch the unit off and on. If an update failed, write it again (section 4)</td>
+</tr>
+<tr>
+<td>The port is up, the light blinks every 2 s, but a transmitter beside it is not found</td>
+<td>The antenna is off; the transmitter is of a kind the sensor does not know (section 1); video on <code>E4</code> or <code>E8</code></td>
+<td>Fit the antenna. Try with an ExpressLRS handset or an analog transmitter on another channel</td>
+</tr>
+<tr>
+<td>The master shows the sensor's radio as <code>error</code>, or restarts the sensor</td>
+<td>The radio did not come up after a restart. The sensor resets itself up to twice, then says <code>error</code>, and the master restarts it up to three times (measured once for the sensor's part, 14 Nov 2026)</td>
+<td>Wait a minute. If it stays, switch the unit off and on: a full loss of power clears it</td>
+</tr>
+<tr>
+<td>On USB a line appears once a second and only <code>BOOTLOADER</code> and <code>REBOOT</code> are taken</td>
+<td>Safe mode: the firmware died early four times in a row and now waits to be replaced. It tries a normal start by itself after 60 s (read; not yet seen in use)</td>
+<td>Note the number in the line. Write a known good build (section 4)</td>
+</tr>
+<tr>
+<td>A sensor on a charger, alone, cannot be reached over USB</td>
+<td>With no master and no computer it sleeps after 2 s, and a sleeping sensor's USB is off (measured, 13 Nov 2026)</td>
+<td>Unplug it and plug it into a computer, or switch on the unit's master: either wakes it</td>
+</tr>
+<tr>
+<td>A wide carrier is listed near 5666 or 5808 MHz with nothing on the air</td>
+<td>The receiver's own humps (measured, 14 Nov 2026). They are never called video by themselves, but the master may keep a video item near one of them for a minute after its transmitter has gone</td>
+<td>Nothing. If a video item on a channel near them will not go away, wait a minute</td>
+</tr>
+<tr>
+<td>Video is shown on one channel for a long time with no transmitter</td>
+<td>A hump on the receiver's own tuning frequency, left by a start beside a strong transmitter. The sensor now checks for this and throws it out; in twelve starts beside a strong handset since, none became video (measured, 14 Nov 2026)</td>
+<td>If it happens all the same: switch the unit off and on, away from the transmitter, and report it</td>
+</tr>
+<tr>
+<td>Verified control with no handset you know of</td>
+<td>Another device with the same beat (the caution in section 3), or a real handset farther away than you think</td>
+<td>Watch whether it comes again and whether video joins it. One short sighting alone is weak evidence</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-version-and-date">6. Version and date</h2>
+<p>Written 15 Nov 2026 from the code at <code>74a39f3</code>. Spec version of the sensor link: v1.</p>
+<p><strong>Not checked for this page:</strong> the light's patterns other than steady; the antenna's effect; safe mode on a board; the sensor on the unit's cell; any drone in the air. Nothing here was measured outdoors.</p>
+
+</main>
+<footer class="wrap foot">
+  <p>The detector only listens for aircraft and their controllers. Its sensors never transmit, and the master's one radio link is Bluetooth to a phone.</p>
+  <p class="foot-small">From the project's guide at commit 50ae254.</p>
+</footer>
+</body>
+</html>

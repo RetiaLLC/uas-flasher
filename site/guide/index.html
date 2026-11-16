@@ -23,6 +23,8 @@
     <a href="index.html" aria-current="page">Guide</a>
     <a href="quickstart.html">Quickstart</a>
     <a href="how-to.html">How-to</a>
+    <a href="remote-id-sensor.html">Remote ID sensor</a>
+    <a href="rf-sensor.html">RF sensor</a>
     <a href="../">Firmware</a>
   </nav>
 </header>
@@ -33,7 +35,7 @@
 <ul>
 <li><strong>What this describes:</strong> master firmware 0.12.0 (the landscape screen), Remote ID sensor 0.7.3 and the RF sensor with its check of the packet rate, as they stood on 16 Nov 2026</li>
 <li>Shorter: the <a href="quickstart.html">quickstart</a> takes a unit to its first alert, and the <a href="how-to.html">how-to pages</a> have one task each</li>
-<li>Each sensor has a page of its own: the Remote ID sensor and the RF sensor. A page on power and charging and a page on the phone app are still to come</li>
+<li>Each sensor has a page of its own: the <a href="remote-id-sensor.html">Remote ID sensor</a> and the <a href="rf-sensor.html">RF sensor</a>. A page on power and charging and a page on the phone app are still to come</li>
 <li>Where this guide and the firmware disagree, the firmware is right and the guide has the mistake</li>
 </ul>
 <p>How sure each statement is:</p>
@@ -108,12 +110,12 @@
 <tr>
 <td>The Remote ID sensor (RID sensor): a Seeed XIAO ESP32-C5 on a Wio-SX1262 board</td>
 <td>Listens on Wi-Fi and Bluetooth for Remote ID, for Wi-Fi networks and links that look like a drone's, and watches one channel of the 868 MHz band</td>
-<td>Its user's page</td>
+<td><a href="remote-id-sensor.html">Its user's page</a></td>
 </tr>
 <tr>
 <td>The RF sensor: a second XIAO ESP32-C5</td>
 <td>Surveys 2.4 and 5.8 GHz for control links and video links</td>
-<td>Its user's page</td>
+<td><a href="rf-sensor.html">Its user's page</a></td>
 </tr>
 <tr>
 <td>Three antennas</td>
@@ -815,7 +817,7 @@
 <p>The list says that something is there. Following answers the next question, several times a second: is this one signal getting stronger or weaker? It is what the firmware calls seeker mode.</p>
 <ul>
 <li><strong>What can be followed:</strong> a video carrier and a verified control link on 2.4 GHz. Nothing the Remote ID sensor hears can be.</li>
-<li><strong>It needs an RF sensor build that has the seeker in it</strong> (read: RF sensor's page). With a build that lacks it, FOLLOW stays unlit.</li>
+<li><strong>It needs an RF sensor build that has the seeker in it</strong> (read: <a href="rf-sensor.html">RF sensor's page</a>). With a build that lacks it, FOLLOW stays unlit.</li>
 <li><strong>How:</strong> tap the signal's row, then FOLLOW. The Seeker screen comes up. From the screen a seek lasts 300 s at most; STOP or any button at the foot ends it sooner.</li>
 <li><strong>What it costs:</strong> while one signal is followed, the RF sensor does nothing else. The survey of 2.4 and 5.8 GHz stands still, the signals it had listed are held as they were, and a new control or video link is not noticed until the seek ends. Remote ID and the 868 MHz watch go on.</li>
 <li><strong>The sound</strong> changes to short beeps in the pitch of what is followed, faster the stronger the signal is: 1.3 s apart with no signal over the noise, 0.2 s apart at 50 dB.</li>
@@ -917,7 +919,7 @@
 </ul>
 <p>More symptoms and what to do about them: <a href="how-to.html#when-something-is-wrong">When something is wrong</a>.</p>
 <h2 id="what-it-can-and-cannot-detect-today">What it can and cannot detect today</h2>
-<p>By kind of aircraft. &quot;Today&quot; is 16 Nov 2026. <strong>No row is a promise of range.</strong> Each sensor's own page says more: Remote ID sensor, RF sensor.</p>
+<p>By kind of aircraft. &quot;Today&quot; is 16 Nov 2026. <strong>No row is a promise of range.</strong> Each sensor's own page says more: <a href="remote-id-sensor.html">Remote ID sensor</a>, <a href="rf-sensor.html">RF sensor</a>.</p>
 <div class="table-scroll"><table>
 <thead>
 <tr>

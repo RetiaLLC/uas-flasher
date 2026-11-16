@@ -23,6 +23,8 @@
     <a href="index.html">Guide</a>
     <a href="quickstart.html">Quickstart</a>
     <a href="how-to.html" aria-current="page">How-to</a>
+    <a href="remote-id-sensor.html">Remote ID sensor</a>
+    <a href="rf-sensor.html">RF sensor</a>
     <a href="../">Firmware</a>
   </nav>
 </header>
@@ -164,7 +166,7 @@ python3 tools/north.py --port PORT calibrate 'forget=va|5880'
 <h2 id="follow-one-signal">Follow one signal</h2>
 <p>To find out whether one signal grows or fades as you move.</p>
 <ol>
-<li>Tap the signal's row. FOLLOW is lit if the signal can be followed: a video carrier or a verified control link on 2.4 GHz, on a unit whose RF sensor was built with the seeker (read: RF sensor's page).</li>
+<li>Tap the signal's row. FOLLOW is lit if the signal can be followed: a video carrier or a verified control link on 2.4 GHz, on a unit whose RF sensor was built with the seeker (read: <a href="rf-sensor.html">RF sensor's page</a>).</li>
 <li>Press FOLLOW. The Seeker screen comes up within a moment.</li>
 <li>Move, and watch the arrow and the number. The number is the change in decibels since you pressed FOLLOW. The beeps come faster as the signal grows.</li>
 <li>Press STOP when you are done. From the screen a seek ends by itself after 300 s.</li>
@@ -279,7 +281,7 @@ python3 tools/north.py --port PORT set 'cfg={&quot;sens_rf&quot;:&quot;low&quot;
 <li>Build and flash as that sensor's README says: Remote ID sensor, RF sensor. Both warn against letting the flashing tool reset the chip in the usual way. Read that part before the first flash.</li>
 <li>Afterwards, press PORTS on the master. The port should be UP, and FIRMWARE under it should give the new version.</li>
 </ol>
-<p>Each sensor's own page has the steps: Remote ID sensor, RF sensor. A way to update a sensor through the master, from a computer or from the card, is being built and is not in this firmware.</p>
+<p>Each sensor's own page has the steps: <a href="remote-id-sensor.html">Remote ID sensor</a>, <a href="rf-sensor.html">RF sensor</a>. A way to update a sensor through the master, from a computer or from the card, is being built and is not in this firmware.</p>
 <h2 id="prepare-for-a-demonstration-or-a-test-day">Prepare for a demonstration or a test day</h2>
 <p>Everything here is something the firmware does. It is a list to work through, and it does not make the unit hear what it cannot hear: read <a href="index.html#what-it-can-and-cannot-detect-today">What it can and cannot detect today</a> against the aircraft you expect.</p>
 <p><strong>The day before</strong></p>
@@ -462,7 +464,7 @@ python3 tools/north.py --port PORT set 'cfg={&quot;sens_rf&quot;:&quot;low&quot;
 </tr>
 </tbody>
 </table></div>
-<p>If a sensor's own light could help: each sensor board has a small light whose pattern says what that sensor sees. The patterns are on the sensors' own pages, Remote ID sensor and RF sensor. Not all of them have been checked by eye.</p>
+<p>If a sensor's own light could help: each sensor board has a small light whose pattern says what that sensor sees. The patterns are on the sensors' own pages, <a href="remote-id-sensor.html">Remote ID sensor</a> and <a href="rf-sensor.html">RF sensor</a>. Not all of them have been checked by eye.</p>
 
 </main>
 <footer class="wrap foot">

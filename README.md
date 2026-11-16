@@ -101,14 +101,14 @@ Refused: files that do not match their sums; an application that is not one of t
 
 ## The user guide
 
-The unit's guide is written in the firmware's repository (`docs/guide/`) and published here as `site/guide/`: the full guide, the quickstart and the how-to pages, with their pictures. With `gh` signed in and markdown-it-py installed:
+The unit's guide is written in the firmware's repository (`docs/guide/`) and published here as `site/guide/`: the full guide, the quickstart and the how-to pages, with their pictures, and the two sensors' own pages (`sensors/*/docs/guide/`, published at the maintainer's word of 16 Nov 2026). With `gh` signed in and markdown-it-py installed:
 
 ```
 python3 scripts/build_guide.py fetch --repo <owner>/<firmware repository> --into guide-src
 python3 scripts/build_guide.py build --src guide-src --out site/guide
 ```
 
-As the guide's owner asked: its last section, which is for the team, is left out, and a link that leaves the guide (into the private repository, or to the sensors' own pages, which are not published yet) is dropped with its words kept. Nothing else changes. `tests/test_guide_pages.py` checks the published pages for both, and that every link and picture inside the guide is there.
+As the guide's owner asked: its last section, which is for the team, is left out, and a link that leaves the guide (into the private repository) is dropped with its words kept. Nothing else changes. `tests/test_guide_pages.py` checks the published pages for both, and that every link and picture inside the guide is there.
 
 ## Looking at it on your own computer
 

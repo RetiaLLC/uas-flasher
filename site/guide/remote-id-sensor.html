@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Remote ID sensor: a user&#x27;s page · UAS Detector</title>
+<meta name="description" content="This page is for someone who has the finished unit in hand. The unit as a whole is described in the unit&#x27;s guide; this page covers one of its two sensors.">
+<meta name="color-scheme" content="dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../styles.css">
+</head>
+<body class="guide-page">
+<header class="top wrap">
+  <div class="brand">
+    <span class="brand-name">UAS DETECTOR</span>
+    <span class="brand-what">USER GUIDE</span>
+  </div>
+  <nav class="guide-nav" aria-label="Guide">
+    <a href="index.html">Guide</a>
+    <a href="quickstart.html">Quickstart</a>
+    <a href="how-to.html">How-to</a>
+    <a href="remote-id-sensor.html" aria-current="page">Remote ID sensor</a>
+    <a href="rf-sensor.html">RF sensor</a>
+    <a href="../">Firmware</a>
+  </nav>
+</header>
+<main class="wrap guide">
+<p class="guide-note">Written by the team that builds this sensor. Where it names an issue, a pull request or a record, those are in the project's own repository, which is not public. The <a href="../">firmware page</a> flashes a sensor in a browser once its files are in a release: today the Remote ID sensor's are, the RF sensor's are not.</p>
+<h1 id="the-remote-id-sensor-a-users-page">The Remote ID sensor: a user's page</h1>
+<p>This page is for someone who has the finished unit in hand. The unit as a whole is described in the <a href="index.html">unit's guide</a>; this page covers one of its two sensors.</p>
+<ul>
+<li>Describes: detector 0.7.3, read from the code on 15 Nov 2026</li>
+<li>How sure each statement is: &quot;measured&quot; means seen on the one sensor that exists, on a bench, by the rid-sensor agent, on the date given in the linked record. &quot;Read&quot; means taken from the code or from a maker's page. Nothing here was measured with a real aircraft.</li>
+</ul>
+<h2 id="1-what-it-is-for">1. What it is for</h2>
+<p>The Remote ID sensor listens for three things:</p>
+<ul>
+<li><strong>Remote ID</strong>: the identity that many aircraft must broadcast by law, over Wi-Fi or Bluetooth.</li>
+<li><strong>Wi-Fi drones</strong>: aircraft that are flown from a phone over an ordinary Wi-Fi network.</li>
+<li><strong>Control links on 868 MHz</strong>: the kind of long-range radio control that ExpressLRS uses.</li>
+</ul>
+<p>It only listens. It never transmits on any radio.</p>
+<p><strong>What it cannot hear</strong></p>
+<ul>
+<li><strong>Most DJI aircraft, unless they broadcast Remote ID.</strong> Their own link between aircraft and controller (OcuSync) is not Wi-Fi, and this sensor has no receiver for it. The unit's RF sensor may see its energy.</li>
+<li><strong>Older DJI models with &quot;Enhanced Wi-Fi&quot;</strong> (Mavic Mini, Mini SE, the Mavic Air of 2018). Their channels are too narrow for an ordinary Wi-Fi receiver (read: vendor hints).</li>
+<li><strong>A Wi-Fi drone whose network name it does not know</strong>, or one that the owner has renamed. The names it knows are listed in vendor hints.</li>
+<li><strong>Wi-Fi on the 5 GHz channels 52 to 144.</strong> It visits channels 1 to 13, 36 to 48 and 149 to 165.</li>
+<li><strong>Control links that do not use LoRa</strong>, for example Crossfire's fast mode, and anything in the 915 MHz band, which the project does not use in Europe.</li>
+<li><strong>An aircraft that sends nothing</strong>, or one that flies a stored route with its radio off.</li>
+</ul>
+<p>It also takes turns: it listens on one Wi-Fi channel at a time, then for Bluetooth. A short broadcast can fall into a gap. Hearing nothing does not show that nothing is there.</p>
+<h2 id="2-quickstart">2. Quickstart</h2>
+<ol>
+<li>
+<p><strong>Fit both antennas before power.</strong> The 2.4/5.8 GHz antenna goes on the small socket of the XIAO board. The 868 MHz antenna goes on the socket of the Wio-SX1262 board beneath it. Without them the sensor looks alive and hears almost nothing (read: wiring guide).</p>
+</li>
+<li>
+<p><strong>Switch the unit on.</strong> The sensor gets its power from the master and starts with it.</p>
+</li>
+<li>
+<p><strong>Look at the master's status bar.</strong> One port reads <code>RID</code> and turns green within a few seconds. That is this sensor, linked and listening. Which port it is does not matter.</p>
+</li>
+<li>
+<p><strong>Look at the sensor's yellow light</strong>, if you can see the board:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Light</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One short flash every 2 s</td>
+<td>Running, nothing heard</td>
+</tr>
+<tr>
+<td>Even blink, once a second</td>
+<td>A Wi-Fi name, a link or a DJI element in the last 5 s</td>
+</tr>
+<tr>
+<td>Steady on</td>
+<td>A Remote ID decoded in the last 5 s</td>
+</tr>
+<tr>
+<td>Fast blink</td>
+<td>A radio fault</td>
+</tr>
+</tbody>
+</table></div>
+<p>The pattern is read from the code. Nobody has confirmed it by eye yet.</p>
+</li>
+<li>
+<p><strong>Show it a Remote ID</strong>, if you have a source: an aircraft that broadcasts one, switched on nearby, or a phone app that sends a test Remote ID. The master lists a row tagged <code>RID</code> with the name the broadcast gives. On the bench this took 2 to 3 s for a source on Wi-Fi channel 6 (measured with the project's test transmitter: master's record).</p>
+</li>
+</ol>
+<h2 id="3-what-its-reports-mean">3. What its reports mean</h2>
+<p>The master shows each of these as a row; the tag is the word in the row's box.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>What was heard</th>
+<th>What it means for you</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RID</code></td>
+<td>A Remote ID, decoded</td>
+<td>An aircraft, or its controller, says who and where it is. The name and position are what the broadcast claims; nobody has checked them</td>
+</tr>
+<tr>
+<td><code>DJI</code></td>
+<td>A Wi-Fi frame with DJI's own element</td>
+<td>A DJI device of an older Wi-Fi kind is near. The sensor recognises the element and does not decode it. Never tried over the air</td>
+</tr>
+<tr>
+<td><code>LINK</code></td>
+<td>Data flowing both ways on a network with a drone's name or a drone maker's address</td>
+<td>Something is being flown or operated over Wi-Fi. It can also be a camera, a controller being set up, or a file download from a landed aircraft</td>
+</tr>
+<tr>
+<td><code>WIFI</code></td>
+<td>A network name or an address that belongs to a drone maker</td>
+<td>A hint only: a drone, its controller, or anyone who named a hotspot <code>DJI-something</code>. A notice, not an alert</td>
+</tr>
+<tr>
+<td><code>SUB</code>, &quot;control&quot;</td>
+<td>LoRa packets of the kind ExpressLRS sends, on the watched 868 MHz channel, in several seconds running</td>
+<td>A long-range control link is probably on the air. Other LoRa users of the band can raise it for a few seconds</td>
+</tr>
+<tr>
+<td><code>SUB</code>, &quot;bursts&quot;</td>
+<td>Short transmissions on the 868 MHz channel that are not recognised</td>
+<td>A notice only. The band is shared with meters, alarms and sensors</td>
+</tr>
+</tbody>
+</table></div>
+<p>The signal strength shown beside a row says how strongly this sensor heard it. It is not a distance.</p>
+<h2 id="4-how-to">4. How to</h2>
+<h3 id="update-its-firmware">Update its firmware</h3>
+<p>Today this goes through the sensor's own USB-C socket. You need the three image files of a release (<code>bootloader.bin</code>, <code>partition-table.bin</code>, <code>c5_drone_detector.bin</code>) and Python with <code>esptool</code> and <code>pyserial</code>.</p>
+<ol>
+<li>
+<p>Plug a USB cable from the computer into the <strong>sensor's</strong> socket, not the master's. Find its port name, for example <code>/dev/cu.usbmodem1101</code>.</p>
+</li>
+<li>
+<p>Ask the running sensor to enter its loader:</p>
+<pre><code class="language-sh">python3 -c 'import serial,sys; serial.Serial(sys.argv[1],115200).write(b&quot;\n{\&quot;cmd\&quot;:\&quot;boot\&quot;,\&quot;id\&quot;:4000000002,\&quot;mode\&quot;:\&quot;download\&quot;}\n&quot;)' /dev/cu.usbmodem1101
+</code></pre>
+</li>
+<li>
+<p>Wait five seconds, then write the images:</p>
+<pre><code class="language-sh">python3 -m esptool --chip esp32c5 --port /dev/cu.usbmodem1101 --baud 460800 \
+  --before no-reset --after watchdog-reset write-flash \
+  --flash-mode dio --flash-freq 80m --flash-size 8MB \
+  0x2000 bootloader.bin 0x8000 partition-table.bin 0x10000 c5_drone_detector.bin
+</code></pre>
+</li>
+<li>
+<p>The sensor restarts by itself. The master's port turns green again, and the master's Ports screen shows the new version.</p>
+</li>
+</ol>
+<blockquote>
+<p>[!WARNING]
+<strong>Never leave out <code>--before no-reset --after watchdog-reset</code>.</strong> The chip on this board is a revision 1.0 ESP32-C5. esptool's usual reset left such a chip hung, with its USB dead, until a full reset (measured on a bench board of the same chip, 13 Nov 2026). For the same reason, do not press the board's buttons to enter the loader, and do not flash it with a tool that resets it by itself.</p>
+</blockquote>
+<p>The same steps through a bench computer are in <code>detector/tools/portal_flash.sh</code>, which is how every flash so far was done. The two commands above were not run in exactly this form from a laptop.</p>
+<h3 id="run-it-alone-on-usb">Run it alone on USB</h3>
+<p>The sensor works without the master. Power it from a computer's USB port and it starts listening after 3 s. It then sends one line of JSON for everything it hears, and a health line every 5 s. The viewer shows these in a browser, on your own computer, and uploads nothing.</p>
+<h3 id="check-that-the-868-mhz-board-is-seated-and-answers">Check that the 868 MHz board is seated and answers</h3>
+<p>With the sensor on USB, send it one line:</p>
+<pre><code class="language-sh">python3 -c 'import serial,sys,time; s=serial.Serial(sys.argv[1],115200,timeout=2); s.write(b&quot;\n{\&quot;cmd\&quot;:\&quot;sg_probe\&quot;,\&quot;id\&quot;:4000000003}\n&quot;); time.sleep(1); print(s.read(4000).decode(errors=&quot;replace&quot;))' /dev/cu.usbmodem1101
+</code></pre>
+<p>An answer with <code>&quot;present&quot;:true</code> means the radio answers. If it is <code>false</code>, the board has lost contact. Pressed on without solder, the radio of the bench sensor never answered; soldered, it has answered ever since (measured, 13 and 14 Nov 2026).</p>
+<p>In the unit, the master tells you the same: a sensor with a working 868 MHz radio sends its level on that band every second.</p>
+<h2 id="5-when-something-is-wrong">5. When something is wrong</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>What you see</th>
+<th>Likely cause</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The <code>RID</code> port turns red for a few seconds, then green</td>
+<td>A radio fault. The sensor switched its receivers off and started them again by itself, 2 s later (measured once, 15 Nov 2026)</td>
+<td>Nothing. If it happens often, note the time and report it</td>
+</tr>
+<tr>
+<td>The <code>RID</code> port stays red</td>
+<td>The fault did not clear, or the master cannot talk to this build</td>
+<td>Switch the unit off and on. If it stays, update the sensor's firmware</td>
+</tr>
+<tr>
+<td>The port never leaves <code>--</code> or grey</td>
+<td>The sensor has no power, or the two wires between it and the master are loose or crossed</td>
+<td>Check the wiring against the wiring guide</td>
+</tr>
+<tr>
+<td>Nothing from 868 MHz is ever listed, and the phone says coverage is reduced</td>
+<td>The Wio-SX1262 board does not answer, or stopped answering</td>
+<td>Run the check above. The sensor goes on with Remote ID meanwhile</td>
+</tr>
+<tr>
+<td>Rows tagged <code>SUB</code> come and go with no aircraft near</td>
+<td>Another user of the band nearby</td>
+<td>Calibrate the unit at that place, as the unit's guide describes. With the master's sub-GHz level at 12 the bench saw one such notice in two hours (measured, 15 Nov 2026: record)</td>
+</tr>
+<tr>
+<td>The sensor is dark and silent while the unit charges</td>
+<td>It sleeps when the master is off and no computer is on its USB. This is meant, to save the cell</td>
+<td>Switch the unit on. Sleep and wake are built and not yet tried on hardware</td>
+</tr>
+<tr>
+<td>The sensor's USB port is dead after a flash</td>
+<td>The chip is hung in its loader, see the warning above</td>
+<td>Unplug every source of power, the cell included, then plug in again</td>
+</tr>
+<tr>
+<td>A Remote ID source nearby is not listed</td>
+<td>Its broadcast fell on a channel or a moment the sensor was not listening, or it sends on a 5 GHz channel the sensor visits only every other second</td>
+<td>Wait 30 s. Broadcasts repeat, and the sensor comes round to each channel about once a second</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="6-version">6. Version</h2>
+<p>Detector 0.7.3, 15 Nov 2026. How the build meets the sensor spec, its settings and every measurement are in the sensor's page and the validation records.</p>
+<p>Not checked for this page: the light by eye; the two update commands as written, from a laptop; sleep and wake; anything with a real aircraft.</p>
+
+</main>
+<footer class="wrap foot">
+  <p>The detector only listens for aircraft and their controllers. Its sensors never transmit, and the master's one radio link is Bluetooth to a phone.</p>
+  <p class="foot-small">From the project's guide at commit 50ae254.</p>
+</footer>
+</body>
+</html>

@@ -13,7 +13,7 @@ GUIDE = os.path.join(os.path.dirname(__file__), "..", "site", "guide")
 class GuidePages(unittest.TestCase):
     def pages(self):
         names = [n for n in os.listdir(GUIDE) if n.endswith(".html")]
-        self.assertEqual(sorted(names), ["how-to.html", "index.html", "quickstart.html"])
+        self.assertEqual(sorted(names), ["how-to.html", "index.html", "quickstart.html", "remote-id-sensor.html", "rf-sensor.html"])
         return {n: open(os.path.join(GUIDE, n), encoding="utf-8").read() for n in names}
 
     def test_the_section_for_the_team_is_left_out(self):

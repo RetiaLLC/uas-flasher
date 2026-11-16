@@ -12,9 +12,10 @@ What changes on the way, as the guide's owner asked (issue 101 of the firmware's
 repository, 15 Nov 2026):
 
 - The full guide's last section, "For people who work on the unit", is left out.
-- A link that leaves the guide (into the repository, or to the sensors' own
-  pages, which are not published) is dropped and its words are kept.
-- Links between the three pages, to their headings and to the pictures are kept.
+- A link that leaves these pages (into the repository) is dropped and its
+  words are kept.
+- Links between the pages, to their headings and to the pictures are kept.
+- The sensors' own pages are published at the maintainer's word of 16 Nov 2026.
 - Nothing else is changed: the words are the owner's.
 
 Needs markdown-it-py (`pip install markdown-it-py`). Raw HTML in the Markdown is
@@ -28,11 +29,14 @@ import shutil
 import subprocess
 import sys
 
-PAGES = {  # source, under the guide's directory -> output name
-    "README.md": "index.html",
-    "quickstart/README.md": "quickstart.html",
-    "how-to/README.md": "how-to.html",
+PAGES = {  # source, as a path in the firmware's repository -> output name
+    "docs/guide/README.md": "index.html",
+    "docs/guide/quickstart/README.md": "quickstart.html",
+    "docs/guide/how-to/README.md": "how-to.html",
+    "sensors/rid/docs/guide/README.md": "remote-id-sensor.html",   # the sensors' owners' pages
+    "sensors/rf/docs/guide/README.md": "rf-sensor.html",
 }
+IMAGES = "docs/guide/img/"
 DROP_SECTION = "For people who work on the unit"
 
 
@@ -50,13 +54,13 @@ def cmd_fetch(args):
                                                 capture_output=True, check=True).stdout)["sha"]
     tree = json.loads(subprocess.run(["gh", "api", "repos/%s/git/trees/%s?recursive=1" % (args.repo, ref)],
                                      capture_output=True, check=True).stdout)["tree"]
-    images = [t["path"][len("docs/guide/"):] for t in tree if re.match(r"^docs/guide/img/[^/]+\.png$", t["path"])]
+    images = [t["path"] for t in tree if re.match(r"^docs/guide/img/[^/]+\.png$", t["path"])]
     if os.path.isdir(args.into):
         shutil.rmtree(args.into)
     for rel in list(PAGES) + images:
         os.makedirs(os.path.join(args.into, os.path.dirname(rel)), exist_ok=True)
         with open(os.path.join(args.into, rel), "wb") as f:
-            f.write(gh_raw(args.repo, "docs/guide/" + rel, ref))
+            f.write(gh_raw(args.repo, rel, ref))
     with open(os.path.join(args.into, "COMMIT"), "w") as f:
         f.write(ref + "\n")
     print("fetched %d pages and %d pictures at %s" % (len(PAGES), len(images), ref[:7]))
@@ -97,8 +101,8 @@ def rewrite_target(target, page_dir):
     joined = os.path.normpath(os.path.join(page_dir, path)) if path else None
     if joined in PAGES:
         return PAGES[joined] + ("#" + anchor if anchor else "")
-    if joined and re.match(r"^img/[^/]+\.png$", joined):
-        return joined
+    if joined and joined.startswith(IMAGES) and re.match(r"^[^/]+\.png$", joined[len(IMAGES):]):
+        return "img/" + joined[len(IMAGES):]
     return None
 
 
@@ -177,7 +181,7 @@ TEMPLATE = """<!doctype html>
   </nav>
 </header>
 <main class="wrap guide">
-<p class="guide-note">This guide describes master firmware 0.12.0, the landscape screen: the <strong>Beta</strong> on the <a href="../">firmware page</a>. The Alpha has the earlier, upright screen. Commands below that name <code>tools/</code> need the project's own tools, which are not public yet.</p>
+<p class="guide-note">{note}</p>
 {body}
 </main>
 <footer class="wrap foot">
@@ -188,7 +192,15 @@ TEMPLATE = """<!doctype html>
 </html>
 """
 
-NAV = [("index.html", "Guide"), ("quickstart.html", "Quickstart"), ("how-to.html", "How-to")]
+NOTE_UNIT = ("This guide describes master firmware 0.12.0, the landscape screen: the <strong>Beta</strong> on the "
+             "<a href=\"../\">firmware page</a>. The Alpha has the earlier, upright screen. Commands below that name "
+             "<code>tools/</code> need the project's own tools, which are not public yet.")
+NOTE_SENSOR = ("Written by the team that builds this sensor. Where it names an issue, a pull request or a record, those are in the "
+               "project's own repository, which is not public. The <a href=\"../\">firmware page</a> flashes a sensor "
+               "in a browser once its files are in a release: today the Remote ID sensor's are, the RF sensor's are not.")
+
+NAV = [("index.html", "Guide"), ("quickstart.html", "Quickstart"), ("how-to.html", "How-to"),
+       ("remote-id-sensor.html", "Remote ID sensor"), ("rf-sensor.html", "RF sensor")]
 
 
 def cmd_build(args):
@@ -202,19 +214,20 @@ def cmd_build(args):
         with open(os.path.join(args.src, src), encoding="utf-8") as f:
             md = f.read()
         title, body, dropped = render(md, os.path.dirname(src), markdown_it)
-        used_images.update(re.findall(r'src="(img/[^"]+\.png)"', body))
+        used_images.update(re.findall(r'src="img/([^"]+\.png)"', body))
         first_para = re.search(r"<p>(.*?)</p>", body, re.S)
         description = re.sub(r"<[^>]+>", "", first_para.group(1)) if first_para else title
         nav = "\n".join('    <a href="%s"%s>%s</a>' % (href, ' aria-current="page"' if href == name else "", label) for href, label in NAV)
+        note = (NOTE_SENSOR if src.startswith("sensors/") else NOTE_UNIT)
         page = TEMPLATE.format(title=html.escape(title), description=html.escape(description[:200], quote=True),
-                               nav=nav, body=body, commit=html.escape(commit))
+                               nav=nav, body=body, commit=html.escape(commit), note=note)
         with open(os.path.join(args.out, name), "w", encoding="utf-8") as f:
             f.write(page)
         print("%s -> %s: %d bytes, %d links dropped%s" % (src, name, len(page), len(dropped),
               " (" + ", ".join(sorted(set(dropped))) + ")" if dropped else ""))
-    for img in sorted(used_images):
-        shutil.copyfile(os.path.join(args.src, img), os.path.join(args.out, img))
-    missing = [i for i in used_images if not os.path.exists(os.path.join(args.src, i))]
+    missing = [i for i in used_images if not os.path.exists(os.path.join(args.src, IMAGES, i))]
+    for img in sorted(set(used_images) - set(missing)):
+        shutil.copyfile(os.path.join(args.src, IMAGES, img), os.path.join(args.out, "img", img))
     print("%d pictures copied%s" % (len(used_images), "; missing: " + ", ".join(missing) if missing else ""))
     return 1 if missing else 0
 
