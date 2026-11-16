@@ -17,6 +17,8 @@
 //   --yes KIND[,KIND]      say yes to other questions: other-board, other-flash
 //   --python PATH          a Python that has pyserial (default: $PYTHON, then python3)
 //   --release TAG          a release other than the first in the catalog
+//   --board KEY            one build of a role that has one per board, e.g. rf-6da55bc-xiao
+//                          (default: the Seeed XIAO's build, as on the page)
 //
 // `look` writes nothing: it opens the port, asks the board what it is, and says what it heard.
 
@@ -84,15 +86,16 @@ try {
 
   const catalog = JSON.parse(readFileSync(join(SITE, "catalog.json"), "utf8"));
   const release = opt.release ? catalog.releases.find((r) => r.tag === opt.release) : catalog.releases[0];
-  const board = release && release.boards[opt.role];
-  if (!board) throw new Error(`no ${opt.role} firmware in release ${opt.release ?? "(first in the catalog)"}`);
+  const builds = release ? Object.entries(release.boards).filter(([k, b]) => (b.role ?? k) === opt.role) : [];
+  const [key, board] = (opt.board ? builds.find(([k]) => k === opt.board) : builds.find(([, b]) => b.board_id === "xiao_esp32c5") ?? builds[0]) ?? [];
+  if (!board) throw new Error(`no ${opt.board ?? opt.role} firmware in release ${opt.release ?? "(first in the catalog)"}; builds: ${builds.map(([k]) => k).join(", ") || "none"}`);
   const parts = [];
   for (const p of board.parts) {
     const data = new Uint8Array(readFileSync(join(SITE, p.file)));
     if ((await sha256(data)) !== p.sha256) throw new Error(`${p.file} does not match its SHA-256 in the catalog`);
     parts.push({ kind: p.kind, offset: p.offset, data });
   }
-  say(`release ${release.tag} (${release.channel}): ${BOARDS[opt.role].noun} ${board.version}, ${parts.length} files, each matches its SHA-256`);
+  say(`release ${release.tag} (${release.channel}): ${BOARDS[opt.role].noun} ${board.version} (${key}), ${parts.length} files, each matches its SHA-256`);
 
   const esptool = await import(join(SITE, "vendor/esptool-js/bundle.js"));
   const yes = new Set((opt.yes ?? "").split(",").filter(Boolean));
