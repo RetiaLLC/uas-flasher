@@ -167,15 +167,21 @@ h2, h3, p { margin: 0; }
 .facts .none { color: var(--faint); }
 
 .card-actions { display: flex; flex-direction: column; gap: 9px; }
-.card-notes { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 2px 12px; border-left: 2px solid var(--line); }
-.card-notes p { margin: 0; font-size: 0.84rem; line-height: 1.5; color: var(--mid); }
-.fact-line { display: block; }
+.card-notes { border-left: 2px solid var(--line); padding-left: 12px; }
+.card-notes summary { cursor: pointer; font: 700 0.72rem var(--mono); letter-spacing: 0.12em; color: var(--dim); padding: 2px 0; width: fit-content; }
+.card-notes summary:hover { color: var(--mid); }
+.card-notes p { margin: 8px 0 0; font-size: 0.84rem; line-height: 1.5; color: var(--mid); }
+.board-pick { display: flex; flex-direction: column; gap: 6px; }
+.board-pick label { font: 500 0.72rem var(--mono); letter-spacing: 0.08em; color: var(--dim); }
+.board-pick select {
+  appearance: none; -webkit-appearance: none; width: 100%;
+  font: 500 0.82rem var(--mono); color: var(--text);
+  background: var(--inset) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2385858c' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center;
+  border: 1px solid var(--line); border-radius: 8px; padding: 9px 32px 9px 12px; cursor: pointer;
+}
+.board-pick select:hover { border-color: #4a4a50; }
 .mono-small { font: 500 0.7rem var(--mono); color: var(--dim); overflow-wrap: anywhere; }
 #phone-app .btn { display: inline-block; text-decoration: none; }
-.fact-line + .fact-line { margin-top: 3px; }
-.build { display: flex; flex-direction: column; gap: 9px; padding-top: 14px; margin-top: 4px; border-top: 1px solid var(--line-soft); }
-.build:first-child { padding-top: 0; margin-top: 0; border-top: 0; }
-.build .why { margin: 0 0 4px; }
 .why { font-size: 0.82rem; color: var(--dim); line-height: 1.45; }
 .why strong { color: var(--mid); font-weight: 500; }
 .tick { display: flex; gap: 10px; align-items: flex-start; font-size: 0.85rem; color: var(--mid); cursor: pointer; line-height: 1.4; }
@@ -335,4 +341,3 @@ h2, h3, p { margin: 0; }
 .guide blockquote.callout-note .callout-title, .guide blockquote.callout-tip .callout-title, .guide blockquote.callout-important .callout-title { color: var(--blue); }
 .guide .callout-tip .callout-title::before, .guide .callout-note .callout-title::before { content: ""; }
 
-.build-name { font: 700 0.8rem var(--mono); letter-spacing: 0.06em; color: var(--text); margin: 0; }

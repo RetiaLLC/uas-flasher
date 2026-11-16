@@ -12,7 +12,13 @@ import { bytesText } from "./js/bytes.js";
 import { FileError, VALIDATED, buildsOf, fetchBoard, firstRelease, loadCatalog } from "./js/catalog.js";
 
 /** The first build of a role in the release in view, or null. */
-const firstBuild = (role) => (buildsOf(state.release, role)[0] ?? [null, null])[1];
+// The build a card offers: the board picked in its drop-down, else the Seeed XIAO's, else the first.
+const pickedKey = (role) => {
+  const builds = buildsOf(state.release, role);
+  const picked = state.pick && builds.find(([k]) => k === state.pick[role]);
+  return (picked ?? builds.find(([, b]) => b.board_id === "xiao_esp32c5") ?? builds[0] ?? [null])[0];
+};
+const firstBuild = (role) => { const k = pickedKey(role); return k ? state.release.boards[k] : null; };
 import { DIRECT_STEPS, FlashError, flashDirect, look } from "./js/direct.js";
 import { LEFT, MasterLink, THROUGH_STEPS, ThroughError, flashThroughMaster } from "./js/north.js";
 
@@ -30,6 +36,7 @@ const state = {
   busy: false,
   armed: false,
   wipe: false,
+  pick: {},         // role -> the build key picked in the card's board drop-down
 };
 
 function el(tag, props = {}, ...children) {
@@ -153,7 +160,7 @@ function renderRelease() {
     el("tbody", {}, rows));
   const waiting = (state.catalog.pending ?? []).map((w) => `${w.label ?? w.channel}: ${w.note ?? "not here yet"}`);
   body.replaceChildren(...[
-    el("p", { class: "release-summary" }, el("strong", { text: (r.label ?? r.tag) + ". " }), r.note ? r.note + " " : "", summary),
+    el("p", { class: "release-summary" }, el("strong", { text: (r.label ?? r.tag) + ". " }), r.note ? r.note : summary),
     waiting.length ? el("p", { class: "release-summary", text: waiting.join(" ") }) : null,
     el("div", { class: "files-scroll" }, table),
     r.notes ? el("details", { class: "release-notes" }, el("summary", { text: "THE RELEASE'S OWN NOTES" }), el("pre", { class: "notes-text", text: r.notes })) : null,
@@ -205,17 +212,26 @@ function renderUnit() {
       ? el("dd", {}, seen.version ?? "unknown", " ", el("small", { text: seen.via === "master" ? `port ${seen.port.toUpperCase()}, as the master says` : "on this cable" }))
       : el("dd", { class: "none", text: "not known yet" });
     const builds = buildsOf(state.release, role);
-    const built = (x) => el("small", { text: `built ${x.built.replace(/ \d\d:\d\d:\d\d$/, "")}` });
-    const inRelease = !rel
-      ? el("dd", { class: "none", text: "no files for this board" })
-      : builds.length > 1
-        ? el("dd", {}, ...builds.map(([key, x]) => el("span", { class: "fact-line" }, x.version, " ", el("small", { text: `for the ${x.label ?? key}` }))))
-        : el("dd", {}, rel.version, " ", built(rel));
-    // Notes every build of this card shares are said once, above the builds; each build keeps its own.
-    const shared = builds.length > 1
-      ? (builds[0][1].notes ?? []).filter((n) => builds.every(([, x]) => (x.notes ?? []).includes(n)))
-      : ((rel && rel.notes) || []);
-    const notes = shared.length ? el("div", { class: "card-notes" }, ...shared.map((n) => el("p", { text: n }))) : null;
+    const key = pickedKey(role);
+    const inRelease = rel
+      ? el("dd", {}, rel.version, " ", el("small", { text: `built ${rel.built.replace(/ \d\d:\d\d:\d\d$/, "")}` }))
+      : el("dd", { class: "none", text: "no files for this board" });
+
+    // A sensor with a build for each board: one drop-down, the Seeed XIAO first.
+    let pick = null;
+    if (builds.length > 1) {
+      const order = [...builds].sort(([, x], [, y]) => (x.board_id === "xiao_esp32c5" ? -1 : y.board_id === "xiao_esp32c5" ? 1 : 0));
+      const select = el("select", { id: `board-${role}`, disabled: state.busy },
+        ...order.map(([k, x]) => el("option", { value: k, text: x.label ?? k })));
+      select.value = key;
+      select.addEventListener("change", () => { state.pick[role] = select.value; render(); });
+      pick = el("div", { class: "board-pick" }, el("label", { for: `board-${role}`, text: "BOARD" }), select);
+    }
+
+    const notes = (rel && rel.notes) || [];
+    const notesBox = notes.length
+      ? el("details", { class: "card-notes" }, el("summary", { text: `NOTES ON THIS BUILD (${notes.length})` }), ...notes.map((n) => el("p", { text: n })))
+      : null;
 
     const actions = [];
     if (role === "master") {
@@ -225,36 +241,26 @@ function renderUnit() {
       go.addEventListener("click", () => flashOwn("master"));
       actions.push(go, el("label", { class: "tick" }, tick, el("span", { text: "Also erase settings, paired phones, and learned signals" })));
       if (!rel) actions.push(el("p", { class: "why", text: "This release doesn't include master firmware." }));
-    } else {
+    } else if (rel) {
       const block = throughBlock(role);
-      for (const [key, build] of builds) {
-        const name = builds.length > 1 ? `: ${(build.label ?? key).toUpperCase()}` : "";
-        const through = el("button", { class: "btn btn-main btn-wide", type: "button", text: "THROUGH THE MASTER" + name, disabled: blocked || !!block });
-        through.addEventListener("click", () => flashThrough(role, key));
-        const own = el("button", { class: "btn btn-wide", type: "button", text: "THROUGH ITS OWN SOCKET" + name, disabled: blocked });
-        own.addEventListener("click", () => flashOwn(role, null, key));
-        if (builds.length > 1) {
-          const own_notes = (build.notes ?? []).filter((n) => !shared.includes(n));
-          actions.push(el("section", { class: "build" },
-            el("p", { class: "build-name", text: `${build.label ?? key}  ${build.version}` }),
-            ...own_notes.map((n) => el("p", { class: "why", text: n })),
-            through, own));
-        } else {
-          actions.push(through, own);
-        }
-      }
-      if (builds.length && block) actions.push(el("p", { class: "why", text: block }));
-      actions.push(el("p", { class: "why", text: builds.length
-        ? "When you use the sensor's own USB-C port, keep the battery or the master's USB cable connected too."
-        : `This release doesn't include ${b.noun} firmware.` }));
+      const through = el("button", { class: "btn btn-main btn-wide", type: "button", text: "THROUGH THE MASTER", disabled: blocked || !!block });
+      through.addEventListener("click", () => flashThrough(role, key));
+      const own = el("button", { class: "btn btn-wide", type: "button", text: "THROUGH ITS OWN SOCKET", disabled: blocked });
+      own.addEventListener("click", () => flashOwn(role, null, key));
+      actions.push(through, own);
+      if (block) actions.push(el("p", { class: "why", text: block }));
+      actions.push(el("p", { class: "why", text: "When you use the sensor's own USB-C port, keep the battery or the master's USB cable connected too." }));
+    } else {
+      actions.push(el("p", { class: "why", text: `This release doesn't include ${b.noun} firmware.` }));
     }
 
     return el("article", { class: "card", "data-here": String(here) },
       el("header", { class: "card-head" }, el("h2", { class: "card-title", text: b.label }), el("span", { class: "card-state", "data-tone": tone, text: label })),
       el("div", {}, el("p", { class: "card-what", text: WHAT[role] }),
-        el("p", { class: "card-hw", text: builds.length > 1 ? b.hardware.replace(/^Seeed XIAO ESP32-C5$/, "Seeed XIAO ESP32-C5 or Waveshare ESP32-C5-Zero") : (rel && rel.hardware) || b.hardware })),
+        pick ? null : el("p", { class: "card-hw", text: (rel && rel.hardware) || b.hardware })),
+      pick,
       el("dl", { class: "facts" }, el("dt", { text: "ON THE BOARD" }), onBoard, el("dt", { text: "THIS RELEASE" }), inRelease),
-      notes,
+      notesBox,
       el("div", { class: "card-actions" }, actions));
   });
   $("unit").replaceChildren(...cards);
@@ -505,8 +511,8 @@ function question(q, role) {
         ? `${where} reports the board ${q.named}, and this build is for the ${q.label}.`
         : `${where} doesn't say which board it is. Is it a ${q.label}?`,
       more: q.named
-        ? "Write it only if you're sure the sensor is a " + q.label + ". If it turns out to be the other board, flash it again with that board's button."
-        : "A new sensor, a Remote ID sensor or an older RF build doesn't report its board. The RF card has a button for each board: if this is the other board, press STOP and use that board's button. If you pick the wrong one, flash again with the right button.",
+        ? "Write it only if you're sure the sensor is a " + q.label + ". If it turns out to be the other board, choose that board in the RF card's BOARD list and flash again."
+        : "A new sensor, a Remote ID sensor or an older RF build doesn't report its board. If this is the other board, press STOP, choose it in the RF card's BOARD list, and flash again. If you pick the wrong one, flashing again with the right board fixes it.",
       yes: q.named ? "I'M SURE, WRITE IT" : `YES, IT'S A ${q.label.toUpperCase()}`,
       no: "STOP",
     };
