@@ -257,7 +257,7 @@ export class PretendSerial extends EventTarget {
  */
 export class PretendBoard {
   constructor({ name, kind = "xiao", image = null, mac = null, pace = 0, awayMs = 60, sameObject = false, keepsUsb = kind === "master",
-                inLoader = false, deafToPlain = false, git = "abc1234", foreign = false, mutes = kind === "master" } = {}) {
+                inLoader = false, deafToPlain = false, git = "abc1234", foreign = false, mutes = kind === "master", sensorBoard = "xiao_esp32c5" } = {}) {
     this.name = name ?? kind;
     this.kind = kind;
     this.flashBytes = kind === "master" ? 32 * 1024 * 1024 : 8 * 1024 * 1024;
@@ -271,6 +271,7 @@ export class PretendBoard {
     this.keepsUsb = keepsUsb;
     this.deafToPlain = deafToPlain;
     this.git = git;
+    this.sensorBoard = sensorBoard;
     this.foreign = foreign;      // with no firmware of ours in its flash, it runs its maker's
     this.mutes = mutes;          // after the watchdog's restart its firmware sends nothing, until a restart through RTS
     this.mute = false;
@@ -489,7 +490,7 @@ export class PretendBoard {
   _sensorHello() {
     const role = this.app.role;
     return {
-      event: "hello", link: 1, role, fw: ROLE_FW[role], fw_ver: this.app.version, git: this.git, board: "xiao_esp32c5",
+      event: "hello", link: 1, role, fw: ROLE_FW[role], fw_ver: this.app.version, git: this.git, board: this.sensorBoard,
       mac: this.mac.map((b) => b.toString(16).padStart(2, "0")).join(":"), reset: "poweron", radio: "run",
       caps: role === "rid" ? ["dwell", "profile", "jitter", "subghz", "download"] : ["focus", "cadence", "bands", "spectrum", "selftest", "download"],
       cfg_id: 0,

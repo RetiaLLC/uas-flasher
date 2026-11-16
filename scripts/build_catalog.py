@@ -150,6 +150,15 @@ def read_sums(path):
     return sums
 
 
+def middle_of(name, role):
+    """The version-and-board part of a file's name: what is left between the role and the part name."""
+    stem = name[len(role) + 1:-len(".bin")]
+    for part in ("-partition-table", "-bootloader", "-" + PROJECT_OF[role]):
+        if stem.endswith(part):
+            return stem[:-len(part)]
+    return NAME.match(name).group(2)
+
+
 def read_release(directory, need_sums=True):
     """Every board of one release directory, checked. Returns (boards, notes) or raises Refused."""
     names = sorted(os.listdir(directory))
@@ -170,71 +179,81 @@ def read_release(directory, need_sums=True):
         sums = read_sums(os.path.join(directory, sums_name)) if sums_name in names else None
         if sums is None and need_sums:
             raise Refused("%s is missing: the files of %s cannot be checked" % (sums_name, role))
-        parts = {}
+        # One build a board for most roles. A role may have several, one for each
+        # board it runs on: their files differ in the middle of the name,
+        # <role>-<version and board>-<part>.bin, and each becomes its own entry.
+        groups = {}
         for n in mine:
-            with open(os.path.join(directory, n), "rb") as f:
-                d = f.read()
-            sha = hashlib.sha256(d).hexdigest()
-            if sums is not None:
-                if n not in sums:
-                    raise Refused("%s is not listed in %s" % (n, sums_name))
-                if sums[n] != sha:
-                    raise Refused("%s does not match %s" % (n, sums_name))
-            table = read_table(d)
-            if table:
-                kind, info = "partition-table", table
-            else:
-                info = read_image(d)
-                kind = info["kind"]
-                if info["problems"]:
-                    raise Refused("%s: %s" % (n, "; ".join(info["problems"])))
-                if info["chip_id"] != CHIP_ESP32C5:
-                    raise Refused("%s is for chip %d, not for the ESP32-C5 (23)" % (n, info["chip_id"]))
-            if kind in parts:
-                raise Refused("%s has two files of the kind %s: %s and %s" % (role, kind, parts[kind]["file"], n))
-            parts[kind] = {"file": n, "size": len(d), "sha256": sha, "info": info, "data": d}
-        for kind in ("bootloader", "partition-table", "app"):
-            if kind not in parts:
-                raise Refused("%s has no %s among %s" % (role, kind, ", ".join(mine)))
-        app, table, boot = parts["app"], parts["partition-table"], parts["bootloader"]
-        if app["info"]["project"] != PROJECT_OF[role]:
-            raise Refused("%s names itself %s, and the %s board takes %s" % (
-                app["file"], app["info"]["project"], role, PROJECT_OF[role]))
-        if role == "master" and BENCH_MARK in app["data"]:
-            raise Refused("%s is a bench build: it logs the pairing passkey and must not be handed out" % app["file"])
-        if table["info"]["md5_ok"] is False:
-            raise Refused("%s: the table's own MD5 does not match its entries" % table["file"])
-        slot = table["info"]["app"]
-        if not slot:
-            raise Refused("%s has no application partition" % table["file"])
-        if app["size"] > slot["size"]:
-            raise Refused("%s is %d bytes and its partition holds %d" % (app["file"], app["size"], slot["size"]))
-        table_offset = int(str(more.get("table_offset", TABLE_OFFSET)), 0)
-        first = min(e["offset"] for e in table["info"]["entries"])
-        if BOOTLOADER_OFFSET + boot["size"] > table_offset:
-            raise Refused("%s would run into the partition table at 0x%x" % (boot["file"], table_offset))
-        if table_offset + TABLE_BYTES > first:
-            raise Refused("the partition table at 0x%x would run into the first partition at 0x%x" % (table_offset, first))
-        named = NAME.match(app["file"]).group(2)
-        if named != app["info"]["version"]:
-            notes.append("%s: the file's name says %s and the application says %s; the page shows the application's" % (
-                role, named, app["info"]["version"]))
-        offsets = {"bootloader": BOOTLOADER_OFFSET, "partition-table": table_offset, "app": slot["offset"]}
-        boards[role] = {
-            "project": app["info"]["project"],
-            "version": app["info"]["version"],
-            "built": app["info"]["built"],
-            "idf": app["info"]["idf"],
-            "flash": app["info"]["flash"],
-            "app_slot": {"offset": slot["offset"], "size": slot["size"]},
-            "nvs": ({"offset": table["info"]["nvs"]["offset"], "size": table["info"]["nvs"]["size"]}
-                    if table["info"]["nvs"] else None),
-            "parts": [{"kind": kind, "file": parts[kind]["file"], "offset": offsets[kind], "size": parts[kind]["size"],
-                       "sha256": parts[kind]["sha256"]} for kind in ("bootloader", "partition-table", "app")],
-        }
-        for key in ("settings", "notes", "reads_settings_from"):
-            if key in more:
-                boards[role][key] = more[key]
+            groups.setdefault(middle_of(n, role), []).append(n)
+        for middle, mine in sorted(groups.items()):
+            key = role if len(groups) == 1 else "%s-%s" % (role, middle)
+            parts = {}
+            for n in mine:
+                with open(os.path.join(directory, n), "rb") as f:
+                    d = f.read()
+                sha = hashlib.sha256(d).hexdigest()
+                if sums is not None:
+                    if n not in sums:
+                        raise Refused("%s is not listed in %s" % (n, sums_name))
+                    if sums[n] != sha:
+                        raise Refused("%s does not match %s" % (n, sums_name))
+                table = read_table(d)
+                if table:
+                    kind, info = "partition-table", table
+                else:
+                    info = read_image(d)
+                    kind = info["kind"]
+                    if info["problems"]:
+                        raise Refused("%s: %s" % (n, "; ".join(info["problems"])))
+                    if info["chip_id"] != CHIP_ESP32C5:
+                        raise Refused("%s is for chip %d, not for the ESP32-C5 (23)" % (n, info["chip_id"]))
+                if kind in parts:
+                    raise Refused("%s has two files of the kind %s: %s and %s" % (role, kind, parts[kind]["file"], n))
+                parts[kind] = {"file": n, "size": len(d), "sha256": sha, "info": info, "data": d}
+            for kind in ("bootloader", "partition-table", "app"):
+                if kind not in parts:
+                    raise Refused("%s has no %s among %s" % (role, kind, ", ".join(mine)))
+            app, table, boot = parts["app"], parts["partition-table"], parts["bootloader"]
+            if app["info"]["project"] != PROJECT_OF[role]:
+                raise Refused("%s names itself %s, and the %s board takes %s" % (
+                    app["file"], app["info"]["project"], role, PROJECT_OF[role]))
+            if role == "master" and BENCH_MARK in app["data"]:
+                raise Refused("%s is a bench build: it logs the pairing passkey and must not be handed out" % app["file"])
+            if table["info"]["md5_ok"] is False:
+                raise Refused("%s: the table's own MD5 does not match its entries" % table["file"])
+            slot = table["info"]["app"]
+            if not slot:
+                raise Refused("%s has no application partition" % table["file"])
+            if app["size"] > slot["size"]:
+                raise Refused("%s is %d bytes and its partition holds %d" % (app["file"], app["size"], slot["size"]))
+            table_offset = int(str(more.get("table_offset", TABLE_OFFSET)), 0)
+            first = min(e["offset"] for e in table["info"]["entries"])
+            if BOOTLOADER_OFFSET + boot["size"] > table_offset:
+                raise Refused("%s would run into the partition table at 0x%x" % (boot["file"], table_offset))
+            if table_offset + TABLE_BYTES > first:
+                raise Refused("the partition table at 0x%x would run into the first partition at 0x%x" % (table_offset, first))
+            named = middle_of(app["file"], role)
+            if named != app["info"]["version"]:
+                notes.append("%s: the file's name says %s and the application says %s; the page shows the application's" % (
+                    role, named, app["info"]["version"]))
+            offsets = {"bootloader": BOOTLOADER_OFFSET, "partition-table": table_offset, "app": slot["offset"]}
+            boards[key] = {
+                "role": role,
+                "variant": middle,
+                "project": app["info"]["project"],
+                "version": app["info"]["version"],
+                "built": app["info"]["built"],
+                "idf": app["info"]["idf"],
+                "flash": app["info"]["flash"],
+                "app_slot": {"offset": slot["offset"], "size": slot["size"]},
+                "nvs": ({"offset": table["info"]["nvs"]["offset"], "size": table["info"]["nvs"]["size"]}
+                        if table["info"]["nvs"] else None),
+                "parts": [{"kind": kind, "file": parts[kind]["file"], "offset": offsets[kind], "size": parts[kind]["size"],
+                           "sha256": parts[kind]["sha256"]} for kind in ("bootloader", "partition-table", "app")],
+            }
+            for k2 in ("settings", "notes", "reads_settings_from"):
+                if k2 in more:
+                    boards[key][k2] = more[k2]
     if not boards:
         raise Refused("no board's files were found: nothing is named <role>-<version>-<part>.bin")
     return boards, notes
@@ -337,7 +356,7 @@ def cmd_build(args):
                 shutil.copyfile(os.path.join(directory, p["file"]), os.path.join(target, p["file"]))
                 p["file"] = "firmware/%s/%s" % (meta["tag"], p["file"])
         entry = {"tag": meta["tag"], "date": meta["date"], "channel": meta["channel"], "boards": boards,
-                 "missing": [r for r in ROLES if r not in boards]}
+                 "missing": [r for r in ROLES if r not in {b["role"] for b in boards.values()}]}
         how = config.get(meta["tag"])
         if how:
             # The publisher's own word on how this release is presented, in place of its state on GitHub.
@@ -345,12 +364,19 @@ def cmd_build(args):
             for key in ("label", "note"):
                 if how.get(key):
                     entry[key] = how[key]
+            # Per build: keyed by "<role>-<version and board>", the start of its files' names.
+            for name, more in (how.get("boards") or {}).items():
+                for b in boards.values():
+                    if name == "%s-%s" % (b["role"], b["variant"]):
+                        for k2 in ("board_id", "hardware", "label", "notes"):
+                            if k2 in more:
+                                b[k2] = more[k2]
         if args.with_notes:
             # The release's own title, notes and commit are written for the team that makes the firmware.
             entry.update({"title": meta["title"], "commit": meta.get("commit"), "notes": meta.get("body", "")})
         releases.append(entry)
         print("%s (%s): %s" % (meta["tag"], entry["channel"], ", ".join(
-            "%s %s" % (role, b["version"]) for role, b in boards.items())))
+            "%s %s" % (key, b["version"]) for key, b in boards.items())))
         for n in notes:
             print("  note: %s" % n)
     if failed and not args.keep_going:

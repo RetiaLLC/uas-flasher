@@ -31,9 +31,15 @@ export class FileError extends Error {}
  * Fetches one board's files of a release and checks them.
  * Resolves to { board, parts: [{ kind, offset, data, file }] }.
  */
-export async function fetchBoard(release, role, onProgress = () => {}, base = "") {
-  const board = release.boards[role];
-  if (!board) throw new FileError(`this release has no files for the ${BOARDS[role].name}`);
+/** The builds of a release for one role: [[key, build], ...]. Most roles have one; a sensor may have one a board. */
+export function buildsOf(release, role) {
+  return Object.entries(release ? release.boards : {}).filter(([key, b]) => (b.role ?? key) === role);
+}
+
+export async function fetchBoard(release, key, onProgress = () => {}, base = "") {
+  const board = release.boards[key];
+  if (!board) throw new FileError(`this release has no files for ${key}`);
+  const role = board.role ?? key;
   const parts = [];
   const total = board.parts.reduce((n, p) => n + p.size, 0);
   let done = 0;

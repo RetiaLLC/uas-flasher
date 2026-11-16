@@ -168,7 +168,7 @@ export function choosePort(hello, standing, role, asked) {
  *
  * Resolves to the `flash` record the master ended with (state `done`). Rejects with a ThroughError.
  */
-export async function flashThroughMaster({ link, role, image, version, port: asked = null, hooks, signal = null }) {
+export async function flashThroughMaster({ link, role, image, version, port: asked = null, hooks, signal = null, boardId = null }) {
   const H = withDefaults(hooks);
   const hello = await link.get("hello", "m_hello");
   if (!hello) throw new ThroughError("No master responds on this port.");
@@ -179,6 +179,10 @@ export async function flashThroughMaster({ link, role, image, version, port: ask
   const chosen = choosePort(hello, standing, role, asked);
   if (chosen.error) throw new ThroughError(chosen.error);
   const port = chosen.port;
+  if (boardId && !chosen.held && (chosen.now ?? {}).board !== boardId) {
+    throw new ThroughError(`This build is only for a sensor on the board ${boardId}. The sensor on port ${port.toUpperCase()} reports ${(chosen.now ?? {}).board ?? "no board"}. Nothing was sent.`);
+  }
+  if (boardId && chosen.held) throw new ThroughError("A sensor waits in its loader, and the master can't tell which board it is. Flash this build through the sensor's own USB-C port.");
   const go = await H.confirm({
     kind: "through-master", role, port, held: chosen.held,
     was: chosen.held ? null : chosen.now && chosen.now.fw_ver, now: version, size: image.length, warning: ONE_SLOT_WARNING,

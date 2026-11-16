@@ -324,3 +324,6 @@ h2, h3, p { margin: 0; }
 .guide blockquote.callout-note, .guide blockquote.callout-tip, .guide blockquote.callout-important { border-left-color: var(--blue); background: #08101d; }
 .guide blockquote.callout-note .callout-title, .guide blockquote.callout-tip .callout-title, .guide blockquote.callout-important .callout-title { color: var(--blue); }
 .guide .callout-tip .callout-title::before, .guide .callout-note .callout-title::before { content: ""; }
+
+.build-name { font: 700 0.8rem var(--mono); letter-spacing: 0.06em; color: var(--text); margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+.card-actions .build-name:first-child { margin-top: 0; padding-top: 0; border-top: 0; }

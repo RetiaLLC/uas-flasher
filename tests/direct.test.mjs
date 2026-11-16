@@ -258,3 +258,48 @@ test("a restart over USB is never offered for a sensor, whatever it does", async
   assert.ok(!board.log.includes("wedged"));
   board.stop();
 });
+
+// A build for one board only: the RF build of the Beta is for the Waveshare ESP32-C5-Zero.
+function zeroBuild() {
+  for (const r of catalog().releases) {
+    const key = Object.keys(r.boards).find((k) => r.boards[k].board_id === "waveshare_esp32_c5_zero");
+    if (key) return loadBoard(r, key);
+  }
+  assert.fail("the catalog has no RF build for the C5-Zero");
+}
+
+test("a board-only build: the C5-Zero sensor names its board in its framed hello and is written", async () => {
+  const serial = unit();
+  const board = serial.add(new sim.PretendBoard({ kind: "xiao", sensorBoard: "waveshare_esp32_c5_zero", image: await sim.makeImage({ project: "widscan58", version: "c9dfff6" }) }));
+  const { board: entry, parts } = zeroBuild();
+  const r = recorder();
+  const out = await flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rf", board: entry, parts, hooks: r.hooks });
+  holds(board, parts);
+  assert.equal(out.now.version, entry.version);
+  assert.equal(board.signalChanges, 0);
+  assert.equal(r.seen.confirms.length, 0);
+  await out.io.close();
+  board.stop();
+});
+
+test("a board-only build: a XIAO RF sensor is refused, and nothing is written", async () => {
+  const serial = unit();
+  const board = serial.add(new sim.PretendBoard({ kind: "xiao", sensorBoard: "xiao_esp32c5", image: await sim.makeImage({ project: "widscan58", version: "c9dfff6" }) }));
+  const before = board.flash.slice(0, 0x20000);
+  const { board: entry, parts } = zeroBuild();
+  await assert.rejects(flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rf", board: entry, parts, hooks: recorder().hooks }),
+    (e) => e instanceof FlashError && e.left === "unchanged" && /xiao_esp32c5/.test(e.message));
+  assert.ok(sameBytes(board.flash.subarray(0, 0x20000), before));
+  assert.ok(!board.log.includes("fw-to-loader"));
+  board.stop();
+});
+
+test("a board-only build: a board that names nothing is refused", async () => {
+  const serial = unit();
+  const board = serial.add(new sim.PretendBoard({ kind: "xiao", image: null, inLoader: true }));
+  const { board: entry, parts } = zeroBuild();
+  await assert.rejects(flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rf", board: entry, parts, hooks: recorder().hooks }),
+    (e) => e instanceof FlashError && /didn't report which board/.test(e.message));
+  assert.ok(board.flash.subarray(0x2000, 0x20000).every((b) => b === 0xff));
+  board.stop();
+});

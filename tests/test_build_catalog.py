@@ -124,6 +124,23 @@ class BuildCatalog(unittest.TestCase):
             bc.read_release(r.dir, need_sums=False)
         self.assertIn("has no bootloader", str(caught.exception))
 
+    def test_one_sensor_can_have_a_build_for_each_board(self):
+        r = Release(self)
+        files = {}
+        for middle in ("9.9-xiao", "9.9-ipex-zero"):
+            for part, data in (("bootloader", image("bootloader")), ("partition-table", table()),
+                               ("widscan58", image("app", "widscan58", "9.9"))):
+                name = "rf-%s-%s.bin" % (middle, part)
+                r.put(name, data)
+                files[name] = data
+        r.put("SHA256SUMS-rf.txt", "".join("%s  %s\n" % (hashlib.sha256(d).hexdigest(), n) for n, d in files.items()).encode())
+        boards, _ = bc.read_release(r.dir)
+        self.assertEqual(sorted(boards), ["rf-9.9-ipex-zero", "rf-9.9-xiao"])
+        for key, b in boards.items():
+            self.assertEqual(b["role"], "rf")
+            self.assertEqual(b["variant"], key[len("rf-"):])
+            self.assertTrue(all(p["file"].startswith(key + "-") for p in b["parts"]))
+
     def test_release_json_adds_what_the_files_cannot_say(self):
         r = Release(self).board("master", "uas_detector_master")
         r.put("release.json", json.dumps({"schema": 1, "boards": {"master": {"settings": {"sg_margin_db": 12}, "notes": ["a note"]}}}).encode())

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated": "2026-11-16T04:43:50Z",
+ "generated": "2026-11-16T05:14:43Z",
  "releases": [
   {
    "tag": "release-2026-11-15",
@@ -8,6 +8,8 @@
    "channel": "alpha",
    "boards": {
     "master": {
+     "role": "master",
+     "variant": "0.11.0",
      "project": "uas_detector_master",
      "version": "0.11.0",
      "built": "Nov 14 2026 22:06:11",
@@ -50,6 +52,8 @@
      ]
     },
     "rid": {
+     "role": "rid",
+     "variant": "0.7.3",
      "project": "c5_drone_detector",
      "version": "0.7.3",
      "built": "Nov 15 2026 08:12:50",
@@ -104,6 +108,8 @@
    "channel": "beta",
    "boards": {
     "master": {
+     "role": "master",
+     "variant": "0.12.0",
      "project": "uas_detector_master",
      "version": "0.12.0",
      "built": "Nov 15 2026 17:52:25",
@@ -144,14 +150,113 @@
        "sha256": "60d45f0d288625788db4e5bc4befecb489e0d94aa2ef9ede5e5fd0da8cf33c90"
       }
      ]
+    },
+    "rf-6da55bc-xiao": {
+     "role": "rf",
+     "variant": "6da55bc-xiao",
+     "project": "widscan58",
+     "version": "6da55bc",
+     "built": "Nov 15 2026 16:42:06",
+     "idf": "5.5.5",
+     "flash": {
+      "mode": "dio",
+      "freq": "80m",
+      "size": "4MB"
+     },
+     "app_slot": {
+      "offset": 65536,
+      "size": 2031616
+     },
+     "nvs": {
+      "offset": 36864,
+      "size": 24576
+     },
+     "parts": [
+      {
+       "kind": "bootloader",
+       "file": "firmware/release-2026-11-16-beta/rf-6da55bc-xiao-bootloader.bin",
+       "offset": 8192,
+       "size": 14720,
+       "sha256": "dd264a9f460bce6a0bc6b4a4788158561eba4481cdb06feb4db7b0eab27c2095"
+      },
+      {
+       "kind": "partition-table",
+       "file": "firmware/release-2026-11-16-beta/rf-6da55bc-xiao-partition-table.bin",
+       "offset": 32768,
+       "size": 3072,
+       "sha256": "520c18ca0bda73aed288d427d260ab051d71219f605707350e6c42401f4836fc"
+      },
+      {
+       "kind": "app",
+       "file": "firmware/release-2026-11-16-beta/rf-6da55bc-xiao-widscan58.bin",
+       "offset": 65536,
+       "size": 751488,
+       "sha256": "53225af7a58e0c90e24eb9635383ef9c0f22dd6583d77af3d71ea1bf897f60f8"
+      }
+     ],
+     "board_id": "xiao_esp32c5",
+     "hardware": "Seeed XIAO ESP32-C5",
+     "label": "Seeed XIAO ESP32-C5",
+     "notes": [
+      "A measuring build for troubleshooting a demo, from a change that isn't merged yet. Its source code will be published later."
+     ]
+    },
+    "rf-a2a45f2-ipex-zero": {
+     "role": "rf",
+     "variant": "a2a45f2-ipex-zero",
+     "project": "widscan58",
+     "version": "a2a45f2",
+     "built": "Nov 15 2026 23:49:37",
+     "idf": "5.5.5",
+     "flash": {
+      "mode": "dio",
+      "freq": "80m",
+      "size": "4MB"
+     },
+     "app_slot": {
+      "offset": 65536,
+      "size": 2031616
+     },
+     "nvs": {
+      "offset": 36864,
+      "size": 24576
+     },
+     "parts": [
+      {
+       "kind": "bootloader",
+       "file": "firmware/release-2026-11-16-beta/rf-a2a45f2-ipex-zero-bootloader.bin",
+       "offset": 8192,
+       "size": 14720,
+       "sha256": "eec013faf5e689fbb5860efa4c182ea8e7e3739362bec812a193cbb2e71e491e"
+      },
+      {
+       "kind": "partition-table",
+       "file": "firmware/release-2026-11-16-beta/rf-a2a45f2-ipex-zero-partition-table.bin",
+       "offset": 32768,
+       "size": 3072,
+       "sha256": "520c18ca0bda73aed288d427d260ab051d71219f605707350e6c42401f4836fc"
+      },
+      {
+       "kind": "app",
+       "file": "firmware/release-2026-11-16-beta/rf-a2a45f2-ipex-zero-widscan58.bin",
+       "offset": 65536,
+       "size": 746864,
+       "sha256": "fda13a280ebac622105a1c79dea35850f2ab7e5ce534911fdab9bbefcc20a9e6"
+      }
+     ],
+     "board_id": "waveshare_esp32_c5_zero",
+     "hardware": "Waveshare ESP32-C5-Zero, antenna on its IPEX socket",
+     "label": "Waveshare ESP32-C5-Zero",
+     "notes": [
+      "A measuring build for troubleshooting a demo, from a change that isn't merged yet. Its source code will be published later."
+     ]
     }
    },
    "missing": [
-    "rid",
-    "rf"
+    "rid"
    ],
    "label": "Beta (Anubis, landscape screen)",
-   "note": "The newest master firmware, with the landscape screen. It might contain bugs. For the sensors, use the Alpha release."
+   "note": "The newest master firmware, with the landscape screen, and RF sensor builds for the Seeed XIAO ESP32-C5 and the Waveshare ESP32-C5-Zero. They might contain bugs. For the Remote ID sensor, use the Alpha release."
   }
  ]
 }

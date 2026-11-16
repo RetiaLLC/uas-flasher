@@ -106,3 +106,13 @@ test("which port: by role, or the one a sensor waits in its loader on", () => {
   assert.equal(choosePort(hello, { left: "loader", port: "a", role: null }, "rf", null).ask, "a");
   assert.equal(choosePort(hello, { left: "loader", port: "a", role: null }, "rf", "a").port, "a");
 });
+
+test("a board-only build through the master is refused for a sensor on another board", async () => {
+  const u = await unit();
+  const image = await sim.makeImage({ project: "widscan58", version: "a2a45f2" });
+  const r = recorder({ "through-master": true });
+  await assert.rejects(flashThroughMaster({ link: u.link, role: "rf", image, version: "a2a45f2", hooks: r.hooks, boardId: "waveshare_esp32_c5_zero" }),
+    /only for a sensor on the board waveshare_esp32_c5_zero/);
+  assert.deepEqual(u.rf.log, []);
+  await u.done();
+});

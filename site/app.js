@@ -9,7 +9,10 @@
 
 import { BOARDS, ROLES, compareVersions, sameVersion } from "./js/boards.js";
 import { bytesText } from "./js/bytes.js";
-import { FileError, VALIDATED, fetchBoard, firstRelease, loadCatalog } from "./js/catalog.js";
+import { FileError, VALIDATED, buildsOf, fetchBoard, firstRelease, loadCatalog } from "./js/catalog.js";
+
+/** The first build of a role in the release in view, or null. */
+const firstBuild = (role) => (buildsOf(state.release, role)[0] ?? [null, null])[1];
 import { DIRECT_STEPS, FlashError, flashDirect, look } from "./js/direct.js";
 import { LEFT, MasterLink, THROUGH_STEPS, ThroughError, flashThroughMaster } from "./js/north.js";
 
@@ -66,7 +69,7 @@ function heroFromConnection() {
     hero("linked", "CONNECTED", "The board doesn't report any of the three firmwares. It might be in its loader, asleep, or empty. You can still flash it. Select the board on its card.");
     return;
   }
-  const rel = state.release && state.release.boards[c.who.role];
+  const rel = state.release && firstBuild(c.who.role);
   let line = `Connected to the ${BOARDS[c.who.role].noun}, firmware ${c.who.version ?? "version unknown"}.`;
   if (rel) line += sameVersion(c.who.version, rel.version) ? " This release has the same version." : ` This release has ${rel.version}.`;
   if (c.who.role === "master" && c.who.ports) {
@@ -117,20 +120,21 @@ function renderRelease() {
   }
 
   const body = $("release-body");
-  const has = ROLES.filter((role) => r.boards[role]).map((role) => `the ${BOARDS[role].noun} (${r.boards[role].version})`);
-  const lacks = ROLES.filter((role) => !r.boards[role]).map((role) => `the ${BOARDS[role].noun}`);
+  const has = ROLES.flatMap((role) => buildsOf(r, role).map(([, b]) => `the ${BOARDS[role].noun}${b.label ? " on the " + b.label : ""} (${b.version})`));
+  const lacks = ROLES.filter((role) => !buildsOf(r, role).length).map((role) => `the ${BOARDS[role].noun}`);
   const list = (items) => (items.length < 2 ? items.join("") : items.slice(0, -1).join(", ") + " and " + items[items.length - 1]);
   const summary = r.notes
     ? r.notes.split(/\n\s*\n/)[0].replace(/\*\*/g, "").replace(/`/g, "").trim()
     : `Firmware for ${list(has)}.` + (lacks.length ? ` This release doesn't include ${list(lacks)}.` : "");
   const rows = [];
   for (const role of ROLES) {
-    const b = r.boards[role];
-    if (!b) {
+    const builds = buildsOf(r, role);
+    if (!builds.length) {
       rows.push(el("tr", { class: "grp" }, el("td", { colspan: "4", text: `${BOARDS[role].label}: not in this release` })));
       continue;
     }
-    rows.push(el("tr", { class: "grp" }, el("td", { colspan: "4", text: `${BOARDS[role].label}  ${b.version}  built ${b.built}  ESP-IDF ${b.idf}` })));
+    for (const [, b] of builds) {
+    rows.push(el("tr", { class: "grp" }, el("td", { colspan: "4", text: `${BOARDS[role].label}${b.label ? " (" + b.label.toUpperCase() + ")" : ""}  ${b.version}  built ${b.built}  ESP-IDF ${b.idf}` })));
     for (const p of b.parts) {
       rows.push(el("tr", {},
         el("td", { text: p.file.split("/").pop() }),
@@ -139,6 +143,7 @@ function renderRelease() {
         el("td", { class: "sha", text: p.sha256 })));
     }
     for (const note of b.notes ?? []) rows.push(el("tr", {}, el("td", { colspan: "4", text: note })));
+    }
   }
   const table = el("table", { class: "files" },
     el("thead", {}, el("tr", {}, el("th", { text: "FILE" }), el("th", { class: "num", text: "WRITTEN AT" }), el("th", { class: "num", text: "SIZE" }), el("th", { text: "SHA-256" }))),
@@ -153,7 +158,7 @@ function renderRelease() {
 
 // --- the three boards ---------------------------------------------------------
 function cardState(role) {
-  const rel = state.release.boards[role];
+  const rel = firstBuild(role);
   const seen = state.seen[role];
   if (!rel) return ["NOT IN THIS RELEASE", ""];
   if (!seen) return ["NOT CONNECTED", ""];
@@ -170,7 +175,7 @@ function cardState(role) {
 const WHAT = {
   master: "The board with the screen. It collects what both sensors hear, shows alerts, and connects to your phone.",
   rid: "The XIAO with the radio board attached. It listens for Remote ID and for signals at 868 MHz.",
-  rf: "The XIAO without a radio board. It listens for video and control links at 2.4 GHz and 5.8 GHz.",
+  rf: "The sensor without a radio board attached. It listens for video and control links at 2.4 GHz and 5.8 GHz.",
 };
 
 /** Why a sensor cannot be flashed through the master right now, or null if it can. */
@@ -186,7 +191,7 @@ function throughBlock(role) {
 function renderUnit() {
   const cards = ROLES.map((role) => {
     const b = BOARDS[role];
-    const rel = state.release.boards[role];
+    const rel = firstBuild(role);
     const seen = state.seen[role];
     const [label, tone] = cardState(role);
     const here = !!(state.conn && state.conn.who.role === role);
@@ -208,22 +213,31 @@ function renderUnit() {
       actions.push(go, el("label", { class: "tick" }, tick, el("span", { text: "Also erase settings, paired phones, and learned signals" })));
       if (!rel) actions.push(el("p", { class: "why", text: "This release doesn't include master firmware." }));
     } else {
+      const builds = buildsOf(state.release, role);
       const block = throughBlock(role);
-      const through = el("button", { class: "btn btn-main btn-wide", type: "button", text: "THROUGH THE MASTER", disabled: blocked || !!block });
-      through.addEventListener("click", () => flashThrough(role));
-      const own = el("button", { class: "btn btn-wide", type: "button", text: "THROUGH ITS OWN SOCKET", disabled: blocked });
-      own.addEventListener("click", () => flashOwn(role));
-      actions.push(through);
-      if (rel && block) actions.push(el("p", { class: "why", text: block }));
-      actions.push(own);
-      actions.push(el("p", { class: "why", text: rel
+      for (const [key, build] of builds) {
+        if (builds.length > 1) {
+          actions.push(el("p", { class: "build-name", text: `${build.label ?? key}  ${build.version}` }));
+          for (const n of build.notes ?? []) actions.push(el("p", { class: "why", text: n }));
+        }
+        const name = builds.length > 1 ? `: ${(build.label ?? key).toUpperCase()}` : "";
+        const through = el("button", { class: "btn btn-main btn-wide", type: "button", text: "THROUGH THE MASTER" + name, disabled: blocked || !!block });
+        through.addEventListener("click", () => flashThrough(role, key));
+        const own = el("button", { class: "btn btn-wide", type: "button", text: "THROUGH ITS OWN SOCKET" + name, disabled: blocked });
+        own.addEventListener("click", () => flashOwn(role, null, key));
+        actions.push(through, own);
+      }
+      if (builds.length && block) actions.push(el("p", { class: "why", text: block }));
+      actions.push(el("p", { class: "why", text: builds.length
         ? "When you use the sensor's own USB-C port, keep the battery or the master's USB cable connected too."
         : `This release doesn't include ${b.noun} firmware.` }));
     }
 
     return el("article", { class: "card", "data-here": String(here) },
       el("header", { class: "card-head" }, el("h2", { class: "card-title", text: b.label }), el("span", { class: "card-state", "data-tone": tone, text: label })),
-      el("div", {}, el("p", { class: "card-what", text: WHAT[role] }), el("p", { class: "card-hw", text: b.hardware })),
+      el("div", {}, el("p", { class: "card-what", text: WHAT[role] }),
+        el("p", { class: "card-hw", text: buildsOf(state.release, role).length > 1 ? b.hardware.replace(/^Seeed XIAO ESP32-C5$/, "Seeed XIAO ESP32-C5 or Waveshare ESP32-C5-Zero") : (rel && rel.hardware) || b.hardware }),
+        ...(buildsOf(state.release, role).length > 1 ? [] : ((rel && rel.notes) || []).map((n) => el("p", { class: "why", text: n })))),
       el("dl", { class: "facts" }, el("dt", { text: "ON THE BOARD" }), onBoard, el("dt", { text: "THIS RELEASE" }), inRelease),
       el("div", { class: "card-actions" }, actions));
   });
@@ -481,10 +495,10 @@ function question(q, role) {
 }
 
 // --- a board through its own socket ----------------------------------------------
-async function flashOwn(role, retryPort = null) {
+async function flashOwn(role, retryPort = null, key = role) {
   if (state.busy) return;
   const b = BOARDS[role];
-  const rel = state.release.boards[role];
+  const rel = state.release.boards[key];
   if (!rel) return;
 
   // Which port: the board on the cable if it is this one (or says nothing), else ask.
@@ -512,7 +526,7 @@ async function flashOwn(role, retryPort = null) {
   let lastPort = port;
   try {
     sheet.step("files", "run");
-    const { board, parts } = await fetchBoard(state.release, role, (done, total) => sheet.progress(done, total, "files"));
+    const { board, parts } = await fetchBoard(state.release, key, (done, total) => sheet.progress(done, total, "files"));
     sheet.step("files", "done", `${parts.length} files, each matches its SHA-256`);
     const esptool = await loadEsptool();
     const out = await flashDirect({ serial: state.serial, esptool, port, role, board, parts, wipe, hooks });
@@ -574,7 +588,7 @@ async function flashOwn(role, retryPort = null) {
     } else if (e instanceof FileError) {
       nodes.push(el("p", { text: "Nothing was written. The files on this site failed their checks. Report this to the site's maintainer." }));
     }
-    sheet.finish("red", "FAILED", nodes, () => { sheet.close(); flashOwn(role, lastPort); });
+    sheet.finish("red", "FAILED", nodes, () => { sheet.close(); flashOwn(role, lastPort, key); });
     state.busy = false;
     render();
     hero("fail", "FAILED", "The flash didn't complete. The details show the board's state.");
@@ -582,10 +596,10 @@ async function flashOwn(role, retryPort = null) {
 }
 
 // --- a sensor through the master ---------------------------------------------------
-async function flashThrough(role) {
+async function flashThrough(role, key = role) {
   if (state.busy || throughBlock(role)) return;
   const b = BOARDS[role];
-  const rel = state.release.boards[role];
+  const rel = state.release.boards[key];
   const link = state.conn.link;
   setBusy(true, "WORKING", `Flashing the ${b.noun} through the master.`);
   sheet.open(`FLASHING THE ${b.label}`, `${rel.version}, through the master.`, [["files", "Fetch and check the file"], ...THROUGH_STEPS]);
@@ -600,10 +614,10 @@ async function flashThrough(role) {
   });
   try {
     sheet.step("files", "run");
-    const { parts } = await fetchBoard(state.release, role, (done, total) => sheet.progress(done, total, "files"));
+    const { parts } = await fetchBoard(state.release, key, (done, total) => sheet.progress(done, total, "files"));
     const app = parts.find((p) => p.kind === "app");
     sheet.step("files", "done", `${bytesText(app.data.length)}, matches its SHA-256`);
-    const end = await flashThroughMaster({ link, role, image: app.data, version: rel.version, hooks });
+    const end = await flashThroughMaster({ link, role, image: app.data, version: rel.version, hooks, boardId: rel.board_id ?? null });
     await refreshMaster();
     const nodes = [
       el("p", {}, el("strong", { text: `The ${b.noun} on port ${String(end.port).toUpperCase()} runs ${end.now}.` }), end.was ? ` It ran ${end.was} before.` : ""),
@@ -627,7 +641,7 @@ async function flashThrough(role) {
       nodes.push(el("p", { text: "Nothing was written. The file on this site failed its checks. Report this to the site's maintainer." }));
     }
     try { await refreshMaster(); } catch { /* the master may have gone */ }
-    sheet.finish("red", "FAILED", nodes, () => { sheet.close(); flashThrough(role); });
+    sheet.finish("red", "FAILED", nodes, () => { sheet.close(); flashThrough(role, key); });
     state.busy = false;
     render();
   } finally {

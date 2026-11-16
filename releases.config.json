@@ -9,7 +9,25 @@
     "release-2026-11-16-beta": {
       "channel": "beta",
       "label": "Beta (Anubis, landscape screen)",
-      "note": "The newest master firmware, with the landscape screen. It might contain bugs. For the sensors, use the Alpha release."
+      "note": "The newest master firmware, with the landscape screen, and RF sensor builds for the Seeed XIAO ESP32-C5 and the Waveshare ESP32-C5-Zero. They might contain bugs. For the Remote ID sensor, use the Alpha release.",
+      "boards": {
+        "rf-a2a45f2-ipex-zero": {
+          "board_id": "waveshare_esp32_c5_zero",
+          "hardware": "Waveshare ESP32-C5-Zero, antenna on its IPEX socket",
+          "notes": [
+            "A measuring build for troubleshooting a demo, from a change that isn't merged yet. Its source code will be published later."
+          ],
+          "label": "Waveshare ESP32-C5-Zero"
+        },
+        "rf-6da55bc-xiao": {
+          "board_id": "xiao_esp32c5",
+          "hardware": "Seeed XIAO ESP32-C5",
+          "label": "Seeed XIAO ESP32-C5",
+          "notes": [
+            "A measuring build for troubleshooting a demo, from a change that isn't merged yet. Its source code will be published later."
+          ]
+        }
+      }
     }
   }
 }

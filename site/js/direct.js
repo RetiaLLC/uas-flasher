@@ -19,7 +19,7 @@
 import { BOARDS, CHIP_NAME, loaderLines, roleOfProject } from "./boards.js";
 import { framed, md5, sleep } from "./bytes.js";
 import { APP_HEAD_BYTES, readAppHead } from "./image.js";
-import { identify } from "./identify.js";
+import { classify, identify } from "./identify.js";
 import { GuardedPort, LineIO, waitForReturn } from "./port.js";
 
 export const DIRECT_STEPS = [
@@ -191,10 +191,11 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
       if (who.role === "master" && who.caps.includes("flash")) {
         // A master that is flashing a sensor must not be restarted under it.
         const asked = id++;
-        await io.write(`{"cmd":"get","id":${asked},"what":"flash"}`);
-        const ack = await io.wait((line) => {
+        const answer = io.wait((line) => {
           try { const r = JSON.parse(line); return r && r.event === "ack" && r.id === asked ? r : null; } catch { return null; }
         }, 1500);
+        await io.write(`{"cmd":"get","id":${asked},"what":"flash"}`);
+        const ack = await answer;
         const f = ack && ack.flash;
         if (f && (f.left === "loader" || ["receiving", "ready", "loader", "erasing", "writing", "verifying", "restarting"].includes(f.state))) {
           await io.close();
@@ -204,6 +205,38 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
     };
     if (who.role) await heard();
     else H.step("ask", "done", who.heard ? "it runs other firmware" : "no response; trying the loader");
+
+    // A build for one board only. Several boards run the same project, so only
+    // the sensor's own hello can say which board it is. The RF sensor's text
+    // console doesn't name its board: its framed hello does, once a framed
+    // heartbeat has moved its link to USB (spec section 11).
+    let linkOnUsb = false;
+    if (board.board_id) {
+      let named = who.record && who.record.board && who.record.event === "hello" ? who.record.board : null;
+      if (!named && who.role === role) {
+        H.log("asking for the sensor's framed hello, which names its board");
+        const asked = id++;
+        // Listen first: the answer can come before the write returns.
+        const answer = io.wait((line) => {
+          const c = classify(line);
+          return c && c.sure && c.record && c.record.event === "hello" ? c : null;
+        }, 2500);
+        await io.write(framed('{"cmd":"hb","ms":1}'));
+        await io.write(framed(`{"cmd":"get","id":${asked},"what":"hello"}`));
+        const got = await answer;
+        if (got) { named = got.record.board ?? null; linkOnUsb = true; }
+      }
+      if (named !== board.board_id) {
+        await io.close();
+        const because = !who.role
+          ? "The board didn't report which board it is."
+          : named
+            ? `This sensor reports the board ${named}.`
+            : "The sensor didn't report which board it is. If it's connected to a master, disconnect it from the master or switch the master off, and then try again.";
+        throw new FlashError("ask", `This build is only for the ${board.hardware ?? board.board_id}. ${because} Nothing was written.`);
+      }
+      H.step("ask", "done", `${BOARDS[role].name} on ${board.board_id}, firmware ${who.version ?? "version unknown"}`);
+    }
 
     // 2. Into the loader, by the firmware's own command.
     H.step("loader", "run");
@@ -235,6 +268,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
     const linesFor = (r) => { const l = loaderLines(r, id, framed); id += 2; return l; };
     const again = async () => { io = new LineIO(guard); await io.open(); await sleep(300); };
     let lines = who.role ? linesFor(who.role) : null;
+    if (lines && linkOnUsb) lines = { first: lines.second, second: [] };
     // A board that said nothing may sit in its loader already: try it as it is.
     session = await attempt(lines ? lines.first : []);
     if (!session && !who.role) {
@@ -332,7 +366,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
       const go = await H.confirm({ kind: "other-board", says: installedRole, chosen: role, version: installed.version });
       if (!go) await leaveUnchanged(`This board runs ${BOARDS[installedRole].noun} firmware. Nothing was written.`);
     }
-    if (flashBytes && flashBytes !== BOARDS[role].flashBytes) {
+    if (flashBytes && !board.board_id && flashBytes !== BOARDS[role].flashBytes) {
       const go = await H.confirm({ kind: "other-flash", chosen: role, flashBytes, expected: BOARDS[role].flashBytes });
       if (!go) await leaveUnchanged(`This board has ${flashBytes / 1048576} MB of flash, but the ${BOARDS[role].noun} has ${BOARDS[role].flashBytes / 1048576} MB. Nothing was written.`);
     }
