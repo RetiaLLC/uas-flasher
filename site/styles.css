@@ -180,6 +180,7 @@ h2, h3, p { margin: 0; }
   border: 1px solid var(--line); border-radius: 8px; padding: 9px 32px 9px 12px; cursor: pointer;
 }
 .board-pick select:hover { border-color: #4a4a50; }
+.pick-why { font-size: 0.78rem; color: var(--green); }
 .mono-small { font: 500 0.7rem var(--mono); color: var(--dim); overflow-wrap: anywhere; }
 #phone-app .btn { display: inline-block; text-decoration: none; }
 .why { font-size: 0.82rem; color: var(--dim); line-height: 1.45; }

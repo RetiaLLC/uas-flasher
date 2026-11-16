@@ -37,6 +37,7 @@ const state = {
   armed: false,
   wipe: false,
   pick: {},         // role -> the build key picked in the card's board drop-down
+  pickFrom: {},     // role -> "sensor" when the pick follows what a connected sensor reports
 };
 
 function el(tag, props = {}, ...children) {
@@ -224,8 +225,9 @@ function renderUnit() {
       const select = el("select", { id: `board-${role}`, disabled: state.busy },
         ...order.map(([k, x]) => el("option", { value: k, text: x.label ?? k })));
       select.value = key;
-      select.addEventListener("change", () => { state.pick[role] = select.value; render(); });
-      pick = el("div", { class: "board-pick" }, el("label", { for: `board-${role}`, text: "BOARD" }), select);
+      select.addEventListener("change", () => { state.pick[role] = select.value; delete state.pickFrom[role]; render(); });
+      pick = el("div", { class: "board-pick" }, el("label", { for: `board-${role}`, text: "BOARD" }), select,
+        state.pickFrom[role] === "sensor" ? el("small", { class: "pick-why", text: "Chosen from the board the connected sensor reports." }) : null);
     }
 
     const notes = (rel && rel.notes) || [];
@@ -280,13 +282,27 @@ function render() {
 /** Takes what a board said of itself into what the cards show. */
 function note(who) {
   if (!who.role) return;
-  state.seen[who.role] = { version: who.version, git: who.git, via: "usb", up: true };
+  state.seen[who.role] = { version: who.version, git: who.git, board: who.board ?? null, via: "usb", up: true };
   if (who.role === "master" && who.ports) {
     for (const role of ["rid", "rf"]) if (state.seen[role] && state.seen[role].via === "master") delete state.seen[role];
     for (const p of who.ports) {
-      if (p.role === "rid" || p.role === "rf") state.seen[p.role] = { version: p.fw_ver, git: p.git, via: "master", port: p.port, up: p.state === "UP" };
+      if (p.role === "rid" || p.role === "rf") state.seen[p.role] = { version: p.fw_ver, git: p.git, board: p.board ?? null, via: "master", port: p.port, up: p.state === "UP" };
     }
+    // Through the master only the RF port can take an RF build: follow its board.
+    if (state.seen.rf && state.seen.rf.via === "master") followBoard("rf", state.seen.rf.board);
+  } else if (who.role === "rid" || who.role === "rf") {
+    // A sensor on the cable can take either sensor's firmware: the RF card follows its board.
+    followBoard("rf", who.board);
   }
+}
+
+/** Sets a card's BOARD list to the build for the board a connected sensor reports, if there is one. */
+function followBoard(role, board) {
+  if (!board || !state.release) return;
+  const match = buildsOf(state.release, role).find(([, b]) => b.board_id === board);
+  if (!match) return;
+  state.pick[role] = match[0];
+  state.pickFrom[role] = "sensor";
 }
 
 async function drop() {
@@ -749,6 +765,12 @@ async function start() {
 
   $("release-select").addEventListener("change", (e) => {
     state.release = state.catalog.releases.find((r) => r.tag === e.target.value) ?? state.release;
+    // The picks were this release's builds: start again from what the sensor reports.
+    state.pick = {};
+    state.pickFrom = {};
+    const cable = state.conn && state.conn.who;
+    if (cable && (cable.role === "rid" || cable.role === "rf")) followBoard("rf", cable.board);
+    else if (state.seen.rf) followBoard("rf", state.seen.rf.board);
     renderRelease();
     render();
   });
