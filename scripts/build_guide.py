@@ -232,10 +232,9 @@ TEMPLATE = """<!doctype html>
 </html>
 """
 
-NOTE_UNIT = ("This guide applies to master firmware 0.12.0, which is the <strong>Beta</strong> release on the "
-             "<a href=\"../\">firmware page</a>. The Beta has a landscape screen. The Alpha release has a portrait "
-             "screen, so its screens differ from the ones shown here. Commands that start with <code>python3 tools/</code> "
-             "need the project's tools, which aren't publicly available.")
+NOTE_UNIT = ("The <strong>Beta</strong> release on the <a href=\"../\">firmware page</a> has the landscape screen shown "
+             "here. The Alpha release has a portrait screen. Commands that start with <code>python3 tools/</code> need the "
+             "project's tools, which aren't publicly available.")
 NOTE_SENSOR = ("The team that builds this sensor wrote this page. The issues, pull requests and records that it names are in "
                "the project's own repository, which isn't public. The <a href=\"../\">firmware page</a> can flash the "
                "Remote ID sensor in a browser. It can't flash the RF sensor, because no release has the RF sensor's files.")
