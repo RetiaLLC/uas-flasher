@@ -243,6 +243,27 @@ NAV = [("index.html", "Guide"), ("quickstart.html", "Quickstart"), ("how-to.html
        ("remote-id-sensor.html", "Remote ID sensor"), ("rf-sensor.html", "RF sensor")]
 
 
+# The page names its releases Anubis 1.0 and Bastet 0.9 (the maintainer, 16 Nov 2026). Until the
+# firmware repo's how-to says so too, its old Alpha/Beta list is rewritten here.
+RELEASE_NAMES = [
+    ("   - **Alpha** has master firmware 0.11.0 with the portrait screen, and Remote ID sensor firmware 0.7.3. The page offers it first.",
+     "   - **Anubis 1.0** has master firmware 0.12.0 with the landscape screen, Remote ID sensor firmware 0.7.3, and the RF sensor "
+     "firmware for both boards. The page offers it first. Use this one."),
+    ("   - **Beta** has master firmware 0.12.0 with the landscape screen, and nothing for the sensors. It might contain bugs.",
+     "   - **Bastet 0.9** has master firmware 0.11.0 with the portrait screen, and Remote ID sensor firmware 0.7.3. "
+     "Use it only if Anubis gives trouble."),
+]
+
+
+def release_names(md, src):
+    for old, new in RELEASE_NAMES:
+        md = md.replace(old, new)
+    for line in md.splitlines():
+        if re.search(r"\b(Alpha|Beta)\b", line):
+            print("WARNING: %s still says Alpha or Beta: %s" % (src, line.strip()[:120]))
+    return md
+
+
 def cmd_build(args):
     import markdown_it
     import markdown_it.token  # noqa: F401  (for alerts)
@@ -253,7 +274,7 @@ def cmd_build(args):
     used_images = set()
     for src, name in PAGES.items():
         with open(os.path.join(args.src, src), encoding="utf-8") as f:
-            md = f.read()
+            md = release_names(f.read(), src)
         title, body, dropped = render(md, os.path.dirname(src), markdown_it)
         used_images.update(re.findall(r'src="img/([^"]+\.png)"', body))
         first_para = re.search(r"<p>(.*?)</p>", body, re.S)
