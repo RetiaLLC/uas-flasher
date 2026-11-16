@@ -146,7 +146,6 @@ function renderRelease() {
         el("td", { class: "num", text: bytesText(p.size) }),
         el("td", { class: "sha", text: p.sha256 })));
     }
-    for (const note of b.notes ?? []) rows.push(el("tr", {}, el("td", { colspan: "4", text: note })));
     }
   }
   const table = el("table", { class: "files" },
@@ -205,9 +204,18 @@ function renderUnit() {
     const onBoard = seen
       ? el("dd", {}, seen.version ?? "unknown", " ", el("small", { text: seen.via === "master" ? `port ${seen.port.toUpperCase()}, as the master says` : "on this cable" }))
       : el("dd", { class: "none", text: "not known yet" });
-    const inRelease = rel
-      ? el("dd", {}, rel.version, " ", el("small", { text: `built ${rel.built.replace(/ \d\d:\d\d:\d\d$/, "")}` }))
-      : el("dd", { class: "none", text: "no files for this board" });
+    const builds = buildsOf(state.release, role);
+    const built = (x) => el("small", { text: `built ${x.built.replace(/ \d\d:\d\d:\d\d$/, "")}` });
+    const inRelease = !rel
+      ? el("dd", { class: "none", text: "no files for this board" })
+      : builds.length > 1
+        ? el("dd", {}, ...builds.map(([key, x]) => el("span", { class: "fact-line" }, x.version, " ", el("small", { text: `for the ${x.label ?? key}` }))))
+        : el("dd", {}, rel.version, " ", built(rel));
+    // Notes every build of this card shares are said once, above the builds; each build keeps its own.
+    const shared = builds.length > 1
+      ? (builds[0][1].notes ?? []).filter((n) => builds.every(([, x]) => (x.notes ?? []).includes(n)))
+      : ((rel && rel.notes) || []);
+    const notes = shared.length ? el("div", { class: "card-notes" }, ...shared.map((n) => el("p", { text: n }))) : null;
 
     const actions = [];
     if (role === "master") {
@@ -218,19 +226,22 @@ function renderUnit() {
       actions.push(go, el("label", { class: "tick" }, tick, el("span", { text: "Also erase settings, paired phones, and learned signals" })));
       if (!rel) actions.push(el("p", { class: "why", text: "This release doesn't include master firmware." }));
     } else {
-      const builds = buildsOf(state.release, role);
       const block = throughBlock(role);
       for (const [key, build] of builds) {
-        if (builds.length > 1) {
-          actions.push(el("p", { class: "build-name", text: `${build.label ?? key}  ${build.version}` }));
-          for (const n of build.notes ?? []) actions.push(el("p", { class: "why", text: n }));
-        }
         const name = builds.length > 1 ? `: ${(build.label ?? key).toUpperCase()}` : "";
         const through = el("button", { class: "btn btn-main btn-wide", type: "button", text: "THROUGH THE MASTER" + name, disabled: blocked || !!block });
         through.addEventListener("click", () => flashThrough(role, key));
         const own = el("button", { class: "btn btn-wide", type: "button", text: "THROUGH ITS OWN SOCKET" + name, disabled: blocked });
         own.addEventListener("click", () => flashOwn(role, null, key));
-        actions.push(through, own);
+        if (builds.length > 1) {
+          const own_notes = (build.notes ?? []).filter((n) => !shared.includes(n));
+          actions.push(el("section", { class: "build" },
+            el("p", { class: "build-name", text: `${build.label ?? key}  ${build.version}` }),
+            ...own_notes.map((n) => el("p", { class: "why", text: n })),
+            through, own));
+        } else {
+          actions.push(through, own);
+        }
       }
       if (builds.length && block) actions.push(el("p", { class: "why", text: block }));
       actions.push(el("p", { class: "why", text: builds.length
@@ -241,9 +252,9 @@ function renderUnit() {
     return el("article", { class: "card", "data-here": String(here) },
       el("header", { class: "card-head" }, el("h2", { class: "card-title", text: b.label }), el("span", { class: "card-state", "data-tone": tone, text: label })),
       el("div", {}, el("p", { class: "card-what", text: WHAT[role] }),
-        el("p", { class: "card-hw", text: buildsOf(state.release, role).length > 1 ? b.hardware.replace(/^Seeed XIAO ESP32-C5$/, "Seeed XIAO ESP32-C5 or Waveshare ESP32-C5-Zero") : (rel && rel.hardware) || b.hardware }),
-        ...(buildsOf(state.release, role).length > 1 ? [] : ((rel && rel.notes) || []).map((n) => el("p", { class: "why", text: n })))),
+        el("p", { class: "card-hw", text: builds.length > 1 ? b.hardware.replace(/^Seeed XIAO ESP32-C5$/, "Seeed XIAO ESP32-C5 or Waveshare ESP32-C5-Zero") : (rel && rel.hardware) || b.hardware })),
       el("dl", { class: "facts" }, el("dt", { text: "ON THE BOARD" }), onBoard, el("dt", { text: "THIS RELEASE" }), inRelease),
+      notes,
       el("div", { class: "card-actions" }, actions));
   });
   $("unit").replaceChildren(...cards);

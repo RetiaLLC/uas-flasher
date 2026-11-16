@@ -73,6 +73,27 @@
     <div id="release-body"></div>
   </section>
 
+  <section class="panel help" id="phone-app" aria-labelledby="app-title">
+    <h2 id="app-title">PHONE APP FOR ANDROID</h2>
+    <div class="help-grid">
+      <div>
+        <h3>Download</h3>
+        <p><a class="btn btn-main" href="app/uas-detector-0.3.1.apk" download>DOWNLOAD THE APP (APK, 2.5 MB)</a></p>
+        <p>Version 0.3.1, for Android 12 or newer. It connects to the master over Bluetooth, shows its alerts, and can stamp them with the phone's location.</p>
+        <p class="mono-small">SHA-256 acae749aee397829891df448e20e45dd7cd13a8d1386e3321f224d74237b6d07</p>
+      </div>
+      <div>
+        <h3>Install it</h3>
+        <p>Open the downloaded file on the phone. Android asks you to allow installs from your browser or file manager: allow it, then tap Install.</p>
+        <p>Open the app, tap Find master, and allow Nearby devices and notifications. On the master, press ALLOW, then type its six-digit code on the phone.</p>
+      </div>
+      <div>
+        <h3>If it says "App not installed"</h3>
+        <p>An older copy from another build is on the phone. Uninstall it first, then install this one. You might need to pair the phone with the master again.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="panel help" aria-labelledby="help-title">
     <h2 id="help-title">BEFORE YOU FLASH</h2>
     <div class="help-grid">
@@ -110,6 +131,7 @@
     <ul>
       <li>Flashing uses esptool-js 0.7.1 by Espressif, licensed under the <a href="vendor/esptool-js/LICENSE.txt">Apache License 2.0</a>.</li>
       <li>The fonts are Space Grotesk and JetBrains Mono, licensed under the <a href="vendor/fonts/README.txt">SIL Open Font License 1.1</a>.</li>
+      <li>The Android app is built from the project's source, version 0.3.1. Its licence hasn't been chosen yet.</li>
       <li>The firmware is built with ESP-IDF 5.5.1 (Apache License 2.0). The Remote ID sensor firmware is licensed under the Apache License 2.0.</li>
     </ul>
   </details>

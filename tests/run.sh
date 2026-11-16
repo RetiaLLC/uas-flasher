@@ -6,7 +6,7 @@
 # firmware repository's own master_host (see tests/master_host.test.mjs).
 set -e
 cd "$(dirname "$0")/.."
-python3 -m unittest -q tests/test_build_catalog.py tests/test_guide_pages.py tests/test_build_guide.py
+python3 -m unittest -q tests/test_build_catalog.py tests/test_guide_pages.py tests/test_build_guide.py tests/test_app_download.py
 # esptool-js prints a TRACE line when a board leaves USB, as it does after every
 # flash. They are left out of what is shown; the tests' own result decides.
 # The limit is for a whole file: the direct-flash tests wait as a person's board would, about two minutes in all.

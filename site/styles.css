@@ -143,7 +143,7 @@ h2, h3, p { margin: 0; }
 .draft-gate input { width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--amber); flex: none; }
 
 /* --- the three boards: the unit's PORTS screen --------------------------- */
-.unit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.unit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; align-items: start; }
 .card {
   display: flex; flex-direction: column; gap: 14px;
   background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px;
@@ -166,7 +166,16 @@ h2, h3, p { margin: 0; }
 .facts dd small { color: var(--dim); font-size: 0.74rem; }
 .facts .none { color: var(--faint); }
 
-.card-actions { display: flex; flex-direction: column; gap: 9px; margin-top: auto; }
+.card-actions { display: flex; flex-direction: column; gap: 9px; }
+.card-notes { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 2px 12px; border-left: 2px solid var(--line); }
+.card-notes p { margin: 0; font-size: 0.84rem; line-height: 1.5; color: var(--mid); }
+.fact-line { display: block; }
+.mono-small { font: 500 0.7rem var(--mono); color: var(--dim); overflow-wrap: anywhere; }
+#phone-app .btn { display: inline-block; text-decoration: none; }
+.fact-line + .fact-line { margin-top: 3px; }
+.build { display: flex; flex-direction: column; gap: 9px; padding-top: 14px; margin-top: 4px; border-top: 1px solid var(--line-soft); }
+.build:first-child { padding-top: 0; margin-top: 0; border-top: 0; }
+.build .why { margin: 0 0 4px; }
 .why { font-size: 0.82rem; color: var(--dim); line-height: 1.45; }
 .why strong { color: var(--mid); font-weight: 500; }
 .tick { display: flex; gap: 10px; align-items: flex-start; font-size: 0.85rem; color: var(--mid); cursor: pointer; line-height: 1.4; }
@@ -326,5 +335,4 @@ h2, h3, p { margin: 0; }
 .guide blockquote.callout-note .callout-title, .guide blockquote.callout-tip .callout-title, .guide blockquote.callout-important .callout-title { color: var(--blue); }
 .guide .callout-tip .callout-title::before, .guide .callout-note .callout-title::before { content: ""; }
 
-.build-name { font: 700 0.8rem var(--mono); letter-spacing: 0.06em; color: var(--text); margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line-soft); }
-.card-actions .build-name:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.build-name { font: 700 0.8rem var(--mono); letter-spacing: 0.06em; color: var(--text); margin: 0; }
