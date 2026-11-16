@@ -310,7 +310,7 @@ def cmd_fetch(args):
     return 0
 
 
-CHANNELS = ("alpha", "beta", "verified", "untested", "draft")
+CHANNELS = ("recommended", "fallback", "alpha", "beta", "verified", "untested", "draft")
 
 
 def read_config(path):
@@ -382,7 +382,18 @@ def cmd_build(args):
     if failed and not args.keep_going:
         print("nothing was written: a refused release stops the build (--keep-going leaves it out instead)")
         return 1
-    order = {"alpha": 0, "verified": 0, "beta": 1, "untested": 1, "draft": 2}
+    # A release may list another release's build of a sensor as its own ("borrow": {"rid": "<tag>"}),
+    # so the recommended release carries every current build in one place.
+    by_tag = {r["tag"]: r for r in releases}
+    for r in releases:
+        for role, tag in ((config.get(r["tag"]) or {}).get("borrow") or {}).items():
+            src = by_tag.get(tag)
+            got = {k: dict(b) for k, b in (src or {}).get("boards", {}).items() if b.get("role", k) == role}
+            if not got:
+                raise SystemExit("%s borrows %s from %s, which has none" % (r["tag"], role, tag))
+            r["boards"].update(got)
+            r["missing"] = [x for x in r["missing"] if x != role]
+    order = {"recommended": 0, "alpha": 1, "verified": 1, "beta": 2, "untested": 2, "draft": 3, "fallback": 4}
     releases.sort(key=lambda r: r["date"], reverse=True)
     releases.sort(key=lambda r: order.get(r["channel"], 3))
     # Directories of releases that are no longer served.

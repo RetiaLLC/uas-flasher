@@ -32,7 +32,7 @@ Add `?demo` to the address to try the page with pretend boards and nothing plugg
 | `scripts/build_guide.py` | Fetches the unit's user guide and turns it into `site/guide/` |
 | `scripts/serve.py` | A local server with caching off, for a look at the page |
 | `tools/` | The page's code against a real board, from a terminal: see below |
-| `releases.config.json` | The name each release goes by on the page (Alpha, Beta), and a line about where it stands |
+| `releases.config.json` | The name each release goes by on the page (recommended, fallback), and a line about where it stands |
 | `tests/` | `sh tests/run.sh` |
 | `.github/workflows/pages.yml` | On every push to `main`: runs the tests, then publishes `site/` |
 
@@ -50,21 +50,24 @@ git add site && git commit && git push
 
 The catalog carries what the page needs and no more. A release's own notes are written for the team that makes the firmware and stay out unless `build` is given `--with-notes`.
 
-### Alpha and Beta
+### Recommended and fallback
 
 `releases.config.json` gives a release the name it goes by on the page. A release that is not listed there is shown by its own state on GitHub: verified, untested or draft.
 
 ```json
 {
   "releases": {
-    "release-2026-11-15": { "channel": "alpha", "label": "Alpha", "note": "Validated on a unit through the night of 14 to 15 Nov 2026." }
-  },
-  "pending": [ { "channel": "beta", "label": "Beta", "note": "The current build. Its files are not in a release yet." } ]
+    "release-2026-11-16-beta": { "channel": "recommended", "label": "Recommended: master 0.12.0, landscape screen, tested 16 Nov",
+                                 "borrow": { "rid": "release-2026-11-15" } },
+    "release-2026-11-15": { "channel": "fallback", "label": "Fallback: master 0.11.0, portrait screen" }
+  }
 }
 ```
 
-- **Alpha** is the release that has been through a validation. It is offered first and flashed without a tick.
-- **Beta** is the current build. The page asks for a tick before it flashes it.
+- **recommended** is listed first and offered by default, flashed without a tick.
+- **fallback** is listed last in a neutral colour, also without a tick: the release to go back to if the recommended one gives trouble.
+- `borrow` lists another release's build of a sensor in this release too, so the recommended release holds every current build.
+- `alpha`, `beta`, `verified`, `untested` and `draft` still work; `beta`, `untested` and `draft` ask for a tick.
 - A name under `pending` is listed as waiting until a release takes its channel.
 
 To see what one directory of files says of itself:

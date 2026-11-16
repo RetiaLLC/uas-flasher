@@ -2,9 +2,9 @@
   "comment": "How the page presents each release of the firmware: the name it goes by here, and a line about where it stands. A release that is not listed is shown by its own state on GitHub (verified, untested or draft). `pending` names what the page will list once its files are in a release.",
   "releases": {
     "release-2026-11-15": {
-      "channel": "alpha",
-      "label": "Alpha (portrait screen)",
-      "note": "Validated on a unit on 14 and 15 Nov 2026. If the Beta causes problems, flash this release.",
+      "channel": "fallback",
+      "label": "Bastet 0.9, portrait screen",
+      "note": "Use only if Anubis gives trouble. Master 0.11.0 and Remote ID sensor 0.7.3.",
       "boards": {
         "master-0.11.0": {
           "notes": [
@@ -14,9 +14,9 @@
       }
     },
     "release-2026-11-16-beta": {
-      "channel": "beta",
-      "label": "Beta (Anubis, landscape screen)",
-      "note": "The newest master firmware, with the landscape screen, and RF sensor builds for the Seeed XIAO ESP32-C5 and the Waveshare ESP32-C5-Zero. They might contain bugs. For the Remote ID sensor, use the Alpha release.",
+      "channel": "recommended",
+      "label": "Anubis 1.0, landscape screen",
+      "note": "Use this release. One complete set, tested on two units through the night of 15 to 16 Nov 2026: master 0.12.0, Remote ID sensor 0.7.3, and the RF sensor for the Seeed XIAO ESP32-C5 or the Waveshare ESP32-C5-Zero.",
       "boards": {
         "rf-a2a45f2-ipex-zero": {
           "board_id": "waveshare_esp32_c5_zero",
@@ -46,6 +46,9 @@
             "The unit doesn't detect DJI's DroneID signal, and a DJI OcuSync link on 2.4 GHz can show as a remote control."
           ]
         }
+      },
+      "borrow": {
+        "rid": "release-2026-11-15"
       }
     }
   }

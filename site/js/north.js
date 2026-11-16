@@ -151,7 +151,7 @@ export function choosePort(hello, standing, role, asked) {
     }
     port = held;
   }
-  if (!port) return { error: `No ${role} sensor is UP on this master.` };
+  if (!port) return { error: `No ${role} sensor is UP on this master. To put this firmware on another sensor (a new one, or a sensor that runs other firmware), flash it through the sensor's own USB-C port.` };
   return { port, held: port === held, now: ports[port] ?? null };
 }
 
@@ -168,7 +168,7 @@ export function choosePort(hello, standing, role, asked) {
  *
  * Resolves to the `flash` record the master ended with (state `done`). Rejects with a ThroughError.
  */
-export async function flashThroughMaster({ link, role, image, version, port: asked = null, hooks, signal = null, boardId = null }) {
+export async function flashThroughMaster({ link, role, image, version, port: asked = null, hooks, signal = null, boardId = null, boardLabel = null }) {
   const H = withDefaults(hooks);
   const hello = await link.get("hello", "m_hello");
   if (!hello) throw new ThroughError("No master responds on this port.");
@@ -179,10 +179,12 @@ export async function flashThroughMaster({ link, role, image, version, port: ask
   const chosen = choosePort(hello, standing, role, asked);
   if (chosen.error) throw new ThroughError(chosen.error);
   const port = chosen.port;
-  if (boardId && !chosen.held && (chosen.now ?? {}).board !== boardId) {
-    throw new ThroughError(`This build is only for a sensor on the board ${boardId}. The sensor on port ${port.toUpperCase()} reports ${(chosen.now ?? {}).board ?? "no board"}. Nothing was sent.`);
+  const named = chosen.held ? null : (chosen.now ?? {}).board ?? null;
+  if (boardId && named !== boardId) {
+    // The sensor names no board (or another one): the person says which board it is.
+    const sure = await H.confirm({ kind: "board-id", named, wanted: boardId, label: boardLabel ?? boardId, port });
+    if (!sure) throw new ThroughError("Nothing was sent.", { stopped: true });
   }
-  if (boardId && chosen.held) throw new ThroughError("A sensor waits in its loader, and the master can't tell which board it is. Flash this build through the sensor's own USB-C port.");
   const go = await H.confirm({
     kind: "through-master", role, port, held: chosen.held,
     was: chosen.held ? null : chosen.now && chosen.now.fw_ver, now: version, size: image.length, warning: ONE_SLOT_WARNING,

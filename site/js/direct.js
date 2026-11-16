@@ -227,15 +227,16 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
         if (got) { named = got.record.board ?? null; linkOnUsb = true; }
       }
       if (named !== board.board_id) {
-        await io.close();
-        const because = !who.role
-          ? "The board didn't report which board it is."
-          : named
-            ? `This sensor reports the board ${named}.`
-            : "The sensor didn't report which board it is. If it's connected to a master, disconnect it from the master or switch the master off, and then try again.";
-        throw new FlashError("ask", `This build is only for the ${board.hardware ?? board.board_id}. ${because} Nothing was written.`);
+        // A new sensor, a Remote ID sensor or an older RF build doesn't name its board:
+        // the person says which board it is (the button they pressed names it).
+        const go = await H.confirm({ kind: "board-id", named, wanted: board.board_id, label: board.label ?? board.hardware ?? board.board_id });
+        if (!go) {
+          await io.close();
+          throw new FlashError("ask", "Nothing was written.", { stopped: true });
+        }
+        H.log(named ? `the sensor reports ${named}; written as ${board.board_id} at the person's word` : `the sensor names no board; written as ${board.board_id} at the person's word`);
       }
-      H.step("ask", "done", `${BOARDS[role].name} on ${board.board_id}, firmware ${who.version ?? "version unknown"}`);
+      H.step("ask", "done", `${BOARDS[role].name}, build for ${board.label ?? board.board_id}, firmware ${who.version ?? "version unknown"}`);
     }
 
     // 2. Into the loader, by the firmware's own command.

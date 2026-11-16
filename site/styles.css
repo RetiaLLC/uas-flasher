@@ -85,6 +85,7 @@ h2, h3, p { margin: 0; }
 .chip[data-tone="green"] { color: var(--green); border-color: #1d5a33; background: #08190f; }
 .chip[data-tone="amber"] { color: var(--amber); border-color: #5c4500; background: #1c1500; }
 .chip[data-tone="red"] { color: var(--red); border-color: #6a241d; background: #1d0a08; }
+.chip[data-tone="grey"] { color: var(--dim, #9aa0a6); border-color: #3a3f45; background: #121417; }
 .chip[data-tone="blue"] { color: var(--blue); border-color: #1f3f73; background: #08101d; }
 
 /* --- hero: the unit's level bar, and one button ------------------------ */

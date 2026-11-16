@@ -107,12 +107,25 @@ test("which port: by role, or the one a sensor waits in its loader on", () => {
   assert.equal(choosePort(hello, { left: "loader", port: "a", role: null }, "rf", "a").port, "a");
 });
 
-test("a board-only build through the master is refused for a sensor on another board", async () => {
+test("a board-only build through the master asks which board when the port names another; no sends nothing", async () => {
   const u = await unit();
   const image = await sim.makeImage({ project: "widscan58", version: "a2a45f2" });
   const r = recorder({ "through-master": true });
-  await assert.rejects(flashThroughMaster({ link: u.link, role: "rf", image, version: "a2a45f2", hooks: r.hooks, boardId: "waveshare_esp32_c5_zero" }),
-    /only for a sensor on the board waveshare_esp32_c5_zero/);
+  await assert.rejects(flashThroughMaster({ link: u.link, role: "rf", image, version: "a2a45f2", hooks: r.hooks, boardId: "waveshare_esp32_c5_zero", boardLabel: "Waveshare ESP32-C5-Zero" }),
+    /Nothing was sent/);
+  assert.equal(r.seen.confirms[0].kind, "board-id");
+  assert.equal(r.seen.confirms[0].wanted, "waveshare_esp32_c5_zero");
   assert.deepEqual(u.rf.log, []);
+  await u.done();
+});
+
+test("a board-only build through the master is written when the person names the board", async () => {
+  const u = await unit();
+  const image = await sim.makeImage({ project: "widscan58", version: "a2a45f2", size: 80 * 1024, seed: 5 });
+  const r = recorder({ "through-master": true, "board-id": true });
+  const end = await flashThroughMaster({ link: u.link, role: "rf", image, version: "a2a45f2", hooks: r.hooks, boardId: "waveshare_esp32_c5_zero", boardLabel: "Waveshare ESP32-C5-Zero" });
+  assert.equal(end.state, "done");
+  assert.ok(sameBytes(u.rf.flash.subarray(0x10000, 0x10000 + image.length), image));
+  assert.deepEqual(r.seen.confirms.map((c) => c.kind), ["board-id", "through-master"]);
   await u.done();
 });

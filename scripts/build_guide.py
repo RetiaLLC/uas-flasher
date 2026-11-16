@@ -232,8 +232,8 @@ TEMPLATE = """<!doctype html>
 </html>
 """
 
-NOTE_UNIT = ("The <strong>Beta</strong> release on the <a href=\"../\">firmware page</a> has the landscape screen shown "
-             "here. The Alpha release has a portrait screen. Commands that start with <code>python3 tools/</code> need the "
+NOTE_UNIT = ("The Anubis 1.0 release on the <a href=\"../\">firmware page</a> has the landscape screen shown "
+             "here. Bastet 0.9 has a portrait screen. Commands that start with <code>python3 tools/</code> need the "
              "project's tools, which aren't publicly available.")
 NOTE_SENSOR = ("The team that builds this sensor wrote this page. The issues, pull requests and records that it names are in "
                "the project's own repository, which isn't public. The <a href=\"../\">firmware page</a> can flash the "

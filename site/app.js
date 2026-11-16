@@ -80,8 +80,13 @@ function heroFromConnection() {
   hero("linked", "CONNECTED", line);
 }
 
+// After any flash, until it is known why one unit at a test detected nothing until it was restarted.
+const OFF_AND_ON = () => el("p", {}, el("strong", { text: "Before you use the unit, switch it off and on once." }));
+
 // --- the release ------------------------------------------------------------
 const CHANNEL = {
+  recommended: ["RECOMMENDED", "green"],
+  fallback: ["FALLBACK", "grey"],
   alpha: ["ALPHA", "green"],
   beta: ["BETA", "amber"],
   verified: ["VERIFIED", "green"],
@@ -89,7 +94,6 @@ const CHANNEL = {
   draft: ["DRAFT", "amber"],
 };
 const GATE = {
-  beta: "The Beta is the newest master firmware, with the landscape screen. It might contain bugs, and it hasn't been validated like the Alpha. Select this box to flash it anyway.",
   untested: "This release is untested on a unit. Select this box to flash it anyway.",
   draft: "This release is a draft and isn't published. Select this box to flash it anyway.",
 };
@@ -150,7 +154,7 @@ function renderRelease() {
     el("tbody", {}, rows));
   const waiting = (state.catalog.pending ?? []).map((w) => `${w.label ?? w.channel}: ${w.note ?? "not here yet"}`);
   body.replaceChildren(...[
-    el("p", { class: "release-summary" }, el("strong", { text: (r.label ?? r.tag) + ". " }), r.note ? r.note + " " : "", summary, r.label ? ` Release tag: ${r.tag}.` : ""),
+    el("p", { class: "release-summary" }, el("strong", { text: (r.label ?? r.tag) + ". " }), r.note ? r.note + " " : "", summary),
     waiting.length ? el("p", { class: "release-summary", text: waiting.join(" ") }) : null,
     el("div", { class: "files-scroll" }, table),
     r.notes ? el("details", { class: "release-notes" }, el("summary", { text: "THE RELEASE'S OWN NOTES" }), el("pre", { class: "notes-text", text: r.notes })) : null,
@@ -483,6 +487,19 @@ function question(q, role) {
       yes: "RESTART IT OVER USB", no: "STOP",
     };
   }
+  if (q.kind === "board-id") {
+    const where = q.port ? `The sensor on port ${q.port.toUpperCase()}` : "This sensor";
+    return {
+      text: q.named
+        ? `${where} reports the board ${q.named}, and this build is for the ${q.label}.`
+        : `${where} doesn't say which board it is. Is it a ${q.label}?`,
+      more: q.named
+        ? "Write it only if you're sure the sensor is a " + q.label + ". If it turns out to be the other board, flash it again with that board's button."
+        : "A new sensor, a Remote ID sensor or an older RF build doesn't report its board. The RF card has a button for each board: if this is the other board, press STOP and use that board's button. If you pick the wrong one, flash again with the right button.",
+      yes: q.named ? "I'M SURE, WRITE IT" : `YES, IT'S A ${q.label.toUpperCase()}`,
+      no: "STOP",
+    };
+  }
   if (q.kind === "through-master") {
     return {
       text: q.held
@@ -569,6 +586,7 @@ async function flashOwn(role, retryPort = null, key = role) {
       nodes.push(el("p", { text: "This release recommends these settings, which a new flash doesn't include:" }),
         el("p", { class: "mono", text: JSON.stringify(board.settings) }), el("div", { class: "row" }, send, said));
     }
+    nodes.push(OFF_AND_ON());
     sheet.finish(out.settled ? "green" : "amber", out.settled ? "DONE" : "CHECK IT", nodes);
     state.busy = false;
     render();
@@ -618,13 +636,14 @@ async function flashThrough(role, key = role) {
     const { parts } = await fetchBoard(state.release, key, (done, total) => sheet.progress(done, total, "files"));
     const app = parts.find((p) => p.kind === "app");
     sheet.step("files", "done", `${bytesText(app.data.length)}, matches its SHA-256`);
-    const end = await flashThroughMaster({ link, role, image: app.data, version: rel.version, hooks, boardId: rel.board_id ?? null });
+    const end = await flashThroughMaster({ link, role, image: app.data, version: rel.version, hooks, boardId: rel.board_id ?? null, boardLabel: rel.label ?? rel.hardware ?? null });
     await refreshMaster();
     const nodes = [
       el("p", {}, el("strong", { text: `The ${b.noun} on port ${String(end.port).toUpperCase()} runs ${end.now}.` }), end.was ? ` It ran ${end.was} before.` : ""),
       el("p", { class: "mono", text: `written and compared at ${end.baud} baud in ${Math.round((end.ms ?? 0) / 1000)} s, try ${end.try ?? 1}` }),
     ];
     if (end.version_ok === false) nodes.push(el("p", { text: `The sensor reports a different version than ${rel.version}. Check the version on the master's PORTS screen.` }));
+    nodes.push(OFF_AND_ON());
     sheet.finish(end.version_ok === false ? "amber" : "green", end.version_ok === false ? "CHECK IT" : "DONE", nodes);
     state.busy = false;
     render();

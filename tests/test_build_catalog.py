@@ -192,6 +192,20 @@ class BuildCatalog(unittest.TestCase):
             got = json.load(f)["releases"]
         self.assertEqual([(r["tag"], r["channel"], r.get("label"), r.get("note")) for r in got],
                          [("r1", "alpha", "Alpha", "Validated."), ("r2", "beta", "Beta", None)])
+        # recommended first, fallback last, and a borrowed sensor build
+        r = Release(self).board("rid", "c5_drone_detector", "0.7.3")
+        for name in os.listdir(r.dir):
+            os.rename(os.path.join(r.dir, name), os.path.join(releases, "r1", name))
+        with open(config, "w") as f:
+            json.dump({"releases": {"r1": {"channel": "fallback", "label": "Fallback"},
+                                    "r2": {"channel": "recommended", "label": "Recommended", "borrow": {"rid": "r1"}}}}, f)
+        self.assertEqual(bc.main(["build", "--releases", releases, "--out", site, "--config", config]), 0)
+        with open(os.path.join(site, "catalog.json")) as f:
+            got = json.load(f)["releases"]
+        self.assertEqual([(r["tag"], r["channel"]) for r in got], [("r2", "recommended"), ("r1", "fallback")])
+        self.assertEqual(sorted(got[0]["boards"]), ["master", "rid"])
+        self.assertEqual(got[0]["boards"]["rid"]["parts"][0]["file"].split("/")[1], "r1")
+        self.assertNotIn("rid", got[0]["missing"])
         with open(config, "w") as f:
             json.dump({"releases": {"r1": {"channel": "gamma"}}}, f)
         self.assertEqual(bc.main(["build", "--releases", releases, "--out", site, "--config", config]), 1)

@@ -282,24 +282,62 @@ test("a board-only build: the C5-Zero sensor names its board in its framed hello
   board.stop();
 });
 
-test("a board-only build: a XIAO RF sensor is refused, and nothing is written", async () => {
+test("a board-only build: a sensor that names another board is asked about; no leaves it unchanged", async () => {
   const serial = unit();
   const board = serial.add(new sim.PretendBoard({ kind: "xiao", sensorBoard: "xiao_esp32c5", image: await sim.makeImage({ project: "widscan58", version: "c9dfff6" }) }));
   const before = board.flash.slice(0, 0x20000);
   const { board: entry, parts } = zeroBuild();
-  await assert.rejects(flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rf", board: entry, parts, hooks: recorder().hooks }),
-    (e) => e instanceof FlashError && e.left === "unchanged" && /xiao_esp32c5/.test(e.message));
+  const r = recorder();
+  await assert.rejects(flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rf", board: entry, parts, hooks: r.hooks }),
+    (e) => e instanceof FlashError && e.left === "unchanged" && e.stopped);
+  assert.deepEqual(r.seen.confirms.map((c) => [c.kind, c.named, c.wanted]), [["board-id", "xiao_esp32c5", "waveshare_esp32_c5_zero"]]);
   assert.ok(sameBytes(board.flash.subarray(0, 0x20000), before));
   assert.ok(!board.log.includes("fw-to-loader"));
   board.stop();
 });
 
-test("a board-only build: a board that names nothing is refused", async () => {
+test("a board-only build: a sensor that names another board is written when the person is sure", async () => {
+  const serial = unit();
+  const board = serial.add(new sim.PretendBoard({ kind: "xiao", sensorBoard: "xiao_esp32c5", image: await sim.makeImage({ project: "widscan58", version: "c9dfff6" }) }));
+  const { board: entry, parts } = zeroBuild();
+  const out = await flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rf", board: entry, parts, hooks: recorder({ "board-id": true }).hooks });
+  holds(board, parts);
+  assert.equal(board.signalChanges, 0);
+  if (out.io) await out.io.close();
+  board.stop();
+});
+
+test("a board-only build: a Remote ID sensor becomes an RF sensor once the person names its board", async () => {
+  const serial = unit();
+  const board = serial.add(new sim.PretendBoard({ kind: "xiao", image: await sim.makeImage({ project: "c5_drone_detector", version: "0.7.3" }) }));
+  const { board: entry, parts } = zeroBuild();
+  const r = recorder({ "other-board": true, "board-id": true });
+  const out = await flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rf", board: entry, parts, hooks: r.hooks });
+  holds(board, parts);
+  assert.deepEqual(r.seen.confirms.map((c) => c.kind), ["other-board", "board-id"]);
+  assert.equal(board.signalChanges, 0);
+  if (out.io) await out.io.close();
+  board.stop();
+});
+
+test("a board-only build: a blank sensor in its loader is written once the person names its board", async () => {
+  const serial = unit();
+  const board = serial.add(new sim.PretendBoard({ kind: "xiao", image: null, inLoader: true }));
+  const { board: entry, parts } = zeroBuild();
+  const r = recorder({ "board-id": true });
+  const out = await flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rf", board: entry, parts, hooks: r.hooks });
+  holds(board, parts);
+  assert.deepEqual(r.seen.confirms.map((c) => [c.kind, c.named]), [["board-id", null]]);
+  if (out.io) await out.io.close();
+  board.stop();
+});
+
+test("a board-only build: a blank sensor is left alone when the person says no", async () => {
   const serial = unit();
   const board = serial.add(new sim.PretendBoard({ kind: "xiao", image: null, inLoader: true }));
   const { board: entry, parts } = zeroBuild();
   await assert.rejects(flashDirect({ serial, esptool, port: await serial.requestPort(), role: "rf", board: entry, parts, hooks: recorder().hooks }),
-    (e) => e instanceof FlashError && /didn't report which board/.test(e.message));
+    (e) => e instanceof FlashError && e.stopped);
   assert.ok(board.flash.subarray(0x2000, 0x20000).every((b) => b === 0xff));
   board.stop();
 });
