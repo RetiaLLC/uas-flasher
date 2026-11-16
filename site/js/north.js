@@ -10,21 +10,21 @@
 import { base64, crc32, hex8, md5 } from "./bytes.js";
 
 export const ONE_SLOT_WARNING =
-  "This version writes over the sensor's only firmware. If the sensor loses power while it is written, " +
-  "or the new firmware does not link, only the sensor's own USB socket mends it.";
+  "This replaces the sensor's only firmware. If the sensor loses power during the update, or the new firmware " +
+  "doesn't connect to the master, you can recover it only through the sensor's own USB-C port.";
 
 export const LEFT = {
-  unchanged: "The sensor runs what it ran before.",
-  loader: "The sensor waits in its ROM loader and the master holds the port. Flash it again from here: nothing else brings it back but its own USB socket or a power cycle.",
-  silent: "Nothing answers on that port. Flash the sensor through its own USB socket, or power-cycle it.",
+  unchanged: "The sensor still runs its previous firmware.",
+  loader: "The sensor is in its loader. Flash it again from this page, through its own USB-C port, or turn the unit off and on.",
+  silent: "The sensor doesn't respond. Flash it through its own USB-C port, or turn the unit off and on.",
 };
 
 export const THROUGH_STEPS = [
-  ["hand", "Hand the image to the master"],
-  ["loader", "The sensor enters its loader"],
-  ["write", "The master writes and compares"],
-  ["restart", "The sensor restarts"],
-  ["hello", "The sensor says hello"],
+  ["hand", "Send the firmware to the master"],
+  ["loader", "Start the sensor's loader"],
+  ["write", "Write and verify"],
+  ["restart", "Restart the sensor"],
+  ["hello", "Confirm the new version"],
 ];
 
 const REFUSALS = {
@@ -171,9 +171,9 @@ export function choosePort(hello, standing, role, asked) {
 export async function flashThroughMaster({ link, role, image, version, port: asked = null, hooks, signal = null }) {
   const H = withDefaults(hooks);
   const hello = await link.get("hello", "m_hello");
-  if (!hello) throw new ThroughError("No master answers on this port.");
+  if (!hello) throw new ThroughError("No master responds on this port.");
   if (!(hello.caps ?? []).includes("flash")) {
-    throw new ThroughError(`Master ${hello.fw_ver} cannot flash a sensor: its capabilities do not name flash.`);
+    throw new ThroughError(`Master firmware ${hello.fw_ver} cannot flash a sensor.`);
   }
   const standing = ((await link.cmd("get", { what: "flash" })) ?? {}).flash ?? {};
   const chosen = choosePort(hello, standing, role, asked);
@@ -195,18 +195,18 @@ export async function flashThroughMaster({ link, role, image, version, port: ask
   }
   if (!ack || !ack.ok) throw new ThroughError(`The master refused: ${refusal(ack)}.`);
   const piece = ack.piece;
-  if (!(piece > 0)) throw new ThroughError("The master named no piece size.");
+  if (!(piece > 0)) throw new ThroughError("The master didn't give a piece size.");
   let off = 0;
   while (off < image.length) {
     if (signal && signal.aborted) {
       await link.cmd("flash", { cancel: true });
-      throw new ThroughError("Cancelled: nothing was written to the sensor.");
+      throw new ThroughError("Cancelled. Nothing was written to the sensor.");
     }
     ack = null;
     for (let i = 0; i < 3 && !ack; i++) {
       ack = await link.cmd("flash", { off, data: base64(image.subarray(off, off + piece)) });
     }
-    if (!ack) throw new ThroughError(`The master stopped answering at byte ${off}: nothing was written to the sensor.`);
+    if (!ack) throw new ThroughError(`The master stopped responding at byte ${off}. Nothing was written to the sensor.`);
     if (ack.ok) off = ack.got;
     else if (ack.key === "off" && "want" in ack) off = ack.want;   // an ack of ours was lost: go on where the master is
     else throw new ThroughError(`The master refused the image: ${refusal(ack)}. Nothing was written to the sensor.`);
@@ -252,10 +252,10 @@ export async function flashThroughMaster({ link, role, image, version, port: ask
       show(rec);
     }
     if (link.lost) {
-      throw new ThroughError("The master left USB. It finishes the flash alone: plug it in again and look at the sensor's version.", { left: "unknown", begun: true });
+      throw new ThroughError("The master disconnected. It finishes the update on its own. Reconnect it and check the sensor's version.", { left: "unknown", begun: true });
     }
     if (Date.now() > until) {
-      throw new ThroughError("The master sent no end of the flash.", { left: "unknown", begun: true });
+      throw new ThroughError("The master didn't report the end of the update.", { left: "unknown", begun: true });
     }
     await link.wait((r) => r.event === "flash", 500);
   }

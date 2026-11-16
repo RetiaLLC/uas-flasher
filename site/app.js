@@ -53,25 +53,25 @@ function hero(stateName, word, line) {
   if (line !== undefined) $("hero-line").textContent = line;
 }
 
-const IDLE_LINE = "Plug a board into this computer with a USB-C cable and press Connect. The page asks the board what it is, shows what it runs, and offers this release for it.";
+const IDLE_LINE = "Connect a board to your computer with a USB-C cable, then click Connect a board. The page shows what the board runs and which release you can install.";
 
 function heroFromConnection() {
   const c = state.conn;
   if (!state.serial) {
-    hero("none", "NO WEB SERIAL", "This browser cannot reach a USB serial port. Open the page in Chrome or Edge on a computer. You can still look around, or try the page with pretend boards from the link at the foot.");
+    hero("none", "NO WEB SERIAL", "This browser can't use USB serial ports. Open this page in Chrome or Edge on a computer. To look around without a board, use the made-up boards link at the bottom of the page.");
     return;
   }
   if (!c) { hero("idle", "READY", IDLE_LINE); return; }
   if (!c.who.role) {
-    hero("linked", "CONNECTED", "The board on this cable says nothing that names a firmware. It may sit in its loader, be asleep, or carry none. You can still flash it: choose below which board it is.");
+    hero("linked", "CONNECTED", "The board doesn't report any of the three firmwares. It might be in its loader, asleep, or empty. You can still flash it. Select the board on its card.");
     return;
   }
   const rel = state.release && state.release.boards[c.who.role];
-  let line = `The ${BOARDS[c.who.role].noun} is on this cable, firmware ${c.who.version ?? "of an unknown version"}.`;
-  if (rel) line += sameVersion(c.who.version, rel.version) ? " That is what this release holds." : ` This release holds ${rel.version}.`;
+  let line = `Connected to the ${BOARDS[c.who.role].noun}, firmware ${c.who.version ?? "version unknown"}.`;
+  if (rel) line += sameVersion(c.who.version, rel.version) ? " This release has the same version." : ` This release has ${rel.version}.`;
   if (c.who.role === "master" && c.who.ports) {
     for (const p of c.who.ports) {
-      line += p.role ? ` Port ${p.port.toUpperCase()}: ${BOARDS[p.role].noun} ${p.fw_ver ?? ""}.` : ` Port ${p.port.toUpperCase()}: no sensor up.`;
+      line += p.role ? ` Port ${p.port.toUpperCase()} has the ${BOARDS[p.role].noun}, ${p.fw_ver ?? "version unknown"}.` : ` Port ${p.port.toUpperCase()} has no sensor running.`;
     }
   }
   hero("linked", "CONNECTED", line);
@@ -86,9 +86,9 @@ const CHANNEL = {
   draft: ["DRAFT", "amber"],
 };
 const GATE = {
-  beta: "The Beta is the most up-to-date master, with the landscape screen, and it may contain bugs. It has not been validated as the Alpha has. Tick here to flash it all the same.",
-  untested: "This release is marked untested: nobody has confirmed it on a unit. Tick here to flash it all the same.",
-  draft: "This release is a draft: it has not been published yet. Tick here to flash it all the same.",
+  beta: "The Beta is the newest master firmware, with the landscape screen. It might contain bugs, and it hasn't been validated like the Alpha. Select this box to flash it anyway.",
+  untested: "This release is untested on a unit. Select this box to flash it anyway.",
+  draft: "This release is a draft and isn't published. Select this box to flash it anyway.",
 };
 
 function renderReleasePicker() {
@@ -122,7 +122,7 @@ function renderRelease() {
   const list = (items) => (items.length < 2 ? items.join("") : items.slice(0, -1).join(", ") + " and " + items[items.length - 1]);
   const summary = r.notes
     ? r.notes.split(/\n\s*\n/)[0].replace(/\*\*/g, "").replace(/`/g, "").trim()
-    : `Firmware for ${list(has)}.` + (lacks.length ? ` None for ${list(lacks)} yet.` : "");
+    : `Firmware for ${list(has)}.` + (lacks.length ? ` This release doesn't include ${list(lacks)}.` : "");
   const rows = [];
   for (const role of ROLES) {
     const b = r.boards[role];
@@ -145,7 +145,7 @@ function renderRelease() {
     el("tbody", {}, rows));
   const waiting = (state.catalog.pending ?? []).map((w) => `${w.label ?? w.channel}: ${w.note ?? "not here yet"}`);
   body.replaceChildren(
-    el("p", { class: "release-summary" }, el("strong", { text: (r.label ?? r.tag) + ". " }), r.note ? r.note + " " : "", summary, r.label ? ` It is ${r.tag} of the firmware.` : ""),
+    el("p", { class: "release-summary" }, el("strong", { text: (r.label ?? r.tag) + ". " }), r.note ? r.note + " " : "", summary, r.label ? ` Release tag: ${r.tag}.` : ""),
     waiting.length ? el("p", { class: "release-summary", text: waiting.join(" ") }) : null,
     el("div", { class: "files-scroll" }, table),
     r.notes ? el("details", { class: "release-notes" }, el("summary", { text: "THE RELEASE'S OWN NOTES" }), el("pre", { class: "notes-text", text: r.notes })) : null);
@@ -168,18 +168,18 @@ function cardState(role) {
 }
 
 const WHAT = {
-  master: "The board with the screen. It collects from both sensors, raises the alerts and talks to the phone.",
-  rid: "The XIAO with the radio board under it. It listens for Remote ID and on 868 MHz.",
-  rf: "The XIAO by itself. It listens for video and control links on 2.4 and 5.8 GHz.",
+  master: "The board with the screen. It collects what both sensors hear, shows alerts, and connects to your phone.",
+  rid: "The XIAO with the radio board attached. It listens for Remote ID and for signals at 868 MHz.",
+  rf: "The XIAO without a radio board. It listens for video and control links at 2.4 GHz and 5.8 GHz.",
 };
 
 /** Why a sensor cannot be flashed through the master right now, or null if it can. */
 function throughBlock(role) {
   const c = state.conn;
-  if (!c || c.who.role !== "master") return "Connect the master first: its USB-C socket reaches the sensors.";
-  if (!c.who.caps.includes("flash")) return `This master's firmware (${c.who.version}) cannot flash a sensor yet. Use the sensor's own socket.`;
+  if (!c || c.who.role !== "master") return "To flash a sensor through the master, connect the master first.";
+  if (!c.who.caps.includes("flash")) return `Master firmware ${c.who.version} can't flash sensors. Use the sensor's own USB-C port.`;
   const seen = state.seen[role];
-  if (!seen || seen.via !== "master" || !seen.up) return `No ${BOARDS[role].noun} is up on this master.`;
+  if (!seen || seen.via !== "master" || !seen.up) return `The master doesn't report a running ${BOARDS[role].noun}.`;
   return null;
 }
 
@@ -205,8 +205,8 @@ function renderUnit() {
       tick.addEventListener("change", () => { state.wipe = tick.checked; });
       const go = el("button", { class: "btn btn-main btn-wide", type: "button", text: "FLASH THE MASTER", disabled: blocked });
       go.addEventListener("click", () => flashOwn("master"));
-      actions.push(go, el("label", { class: "tick" }, tick, el("span", { text: "Also erase its settings, its paired phones and the signals it has learned" })));
-      if (!rel) actions.push(el("p", { class: "why", text: "This release holds no master firmware." }));
+      actions.push(go, el("label", { class: "tick" }, tick, el("span", { text: "Also erase settings, paired phones, and learned signals" })));
+      if (!rel) actions.push(el("p", { class: "why", text: "This release doesn't include master firmware." }));
     } else {
       const block = throughBlock(role);
       const through = el("button", { class: "btn btn-main btn-wide", type: "button", text: "THROUGH THE MASTER", disabled: blocked || !!block });
@@ -217,8 +217,8 @@ function renderUnit() {
       if (rel && block) actions.push(el("p", { class: "why", text: block }));
       actions.push(own);
       actions.push(el("p", { class: "why", text: rel
-        ? "With the cable in the sensor's own socket, keep the cell or the master's USB plugged in as well."
-        : `This release holds no ${b.noun} firmware yet.` }));
+        ? "When you use the sensor's own USB-C port, keep the battery or the master's USB cable connected too."
+        : `This release doesn't include ${b.noun} firmware.` }));
     }
 
     return el("article", { class: "card", "data-here": String(here) },
@@ -281,11 +281,11 @@ async function pickPort() {
 async function connect() {
   if (state.busy) return;
   let port;
-  try { port = await pickPort(); } catch (e) { hero("fail", "FAILED", "The browser could not list serial ports: " + e.message); return; }
+  try { port = await pickPort(); } catch (e) { hero("fail", "FAILED", "The browser couldn't list serial ports: " + e.message); return; }
   if (!port) return;
   state.busy = true;
   renderUnit();
-  hero("work", "ASKING", "Asking the board what it is.");
+  hero("work", "ASKING", "Checking the board.");
   try {
     await drop();
     const { io, guard, who } = await look(port);
@@ -302,8 +302,8 @@ async function connect() {
 
 function openTrouble(e) {
   const text = e && e.message ? e.message : String(e);
-  if (/open|in use|busy|access/i.test(text)) return "The port could not be opened. Another program may hold it: close serial monitors and other flashing tools, then connect again.";
-  return "The board could not be reached: " + text;
+  if (/open|in use|busy|access/i.test(text)) return "The port couldn't be opened. Close any serial monitor or other flashing tool, and then try again.";
+  return "The page couldn't reach the board: " + text;
 }
 
 /** Asks a connected master again what it and its sensors run. */
@@ -416,22 +416,22 @@ const sheet = {
 };
 
 const HINTS = {
-  busy: ["Another program may hold the port. Close serial monitors and other flashing tools, then try again."],
+  busy: ["Close any serial monitor or other flashing tool that uses the port, and then click Try again."],
   "boot-button": [
-    "Put the board into its loader by hand: unplug its USB cable, hold its BOOT button, plug the cable in, let go.",
-    "Then press Try again. The firmware that is on it is not harmed by this.",
+    "Disconnect the board's USB cable. Hold the BOOT button, reconnect the cable, and then release the button.",
+    "Click Try again. This doesn't change the firmware on the board.",
   ],
   "boot-button-silent": [
-    "The board said nothing and no loader answered. It may be asleep, or carry no firmware.",
-    "Unplug its USB cable, hold its BOOT button, plug the cable in, let go. Then press Try again.",
+    "The board didn't respond. It might be asleep or have no firmware.",
+    "Disconnect the board's USB cable. Hold the BOOT button, reconnect the cable, and then release the button. Click Try again.",
   ],
-  replug: ["Unplug the board's USB cable and plug it in again, then press Try again."],
-  again: ["The board waits in its loader. Press Try again: the loader is in the chip itself and cannot be overwritten."],
+  replug: ["Disconnect the board's USB cable, reconnect it, and then click Try again."],
+  again: ["The board is in its loader, which is built into the chip and can't be overwritten. Click Try again."],
 };
 const LEFT_DIRECT = {
-  unchanged: "Nothing was written. The board has what it had.",
-  loader: "The board sits in its loader with a flash that is not whole. It will not start until a flash goes through.",
-  unknown: "The board's state is not known.",
+  unchanged: "Nothing was written. The board still has its previous firmware.",
+  loader: "The board is in its loader with incomplete firmware. It won't start until a flash completes.",
+  unknown: "The board's state is unknown.",
 };
 
 async function loadEsptool() {
@@ -449,15 +449,15 @@ function setBusy(on, word, line) {
 function question(q, role) {
   if (q.kind === "other-board") {
     return {
-      text: `This board carries the ${BOARDS[q.says].noun}'s firmware${q.version ? " (" + q.version + ")" : ""}. You chose to write the ${BOARDS[q.chosen].noun}'s onto it.`,
-      more: "The two sensors are the same board with different firmware, so this can be what you want. A master is another board: sensor firmware does nothing on it.",
+      text: `This board runs ${BOARDS[q.says].noun} firmware${q.version ? " " + q.version : ""}, but you chose ${BOARDS[q.chosen].noun} firmware.`,
+      more: "The two sensors use the same board, so this might be what you want. The master is a different board, and sensor firmware doesn't work on it.",
       yes: "WRITE IT ANYWAY", no: "STOP",
     };
   }
   if (q.kind === "other-flash") {
     return {
-      text: `This board has ${q.flashBytes / 1048576} MB of flash. The ${BOARDS[q.chosen].noun}'s board has ${q.expected / 1048576} MB.`,
-      more: "It looks like one of the unit's other boards. Check which socket the cable is in.",
+      text: `This board has ${q.flashBytes / 1048576} MB of flash, but the ${BOARDS[q.chosen].noun} has ${q.expected / 1048576} MB.`,
+      more: "This might be a different board in the unit. Check which port the cable is connected to.",
       yes: "WRITE IT ANYWAY", no: "STOP",
     };
   }
@@ -493,7 +493,7 @@ async function flashOwn(role, retryPort = null) {
   const usesConn = !port && c && (c.who.role === role || !c.who.role);
   if (usesConn) port = c.port;
   if (!port) {
-    try { port = await pickPort(); } catch (e) { hero("fail", "FAILED", "The browser could not list serial ports: " + e.message); return; }
+    try { port = await pickPort(); } catch (e) { hero("fail", "FAILED", "The browser couldn't list serial ports: " + e.message); return; }
     if (!port) return;
   }
   if (c && port === c.port) await drop();
@@ -507,7 +507,7 @@ async function flashOwn(role, retryPort = null) {
     step: (key, s, detail) => sheet.step(key, s, detail),
     progress: (done, total, kind) => sheet.progress(done, total, kind === "done" ? "" : kind),
     confirm: (q) => sheet.ask(question(q, role)),
-    pickAgain: (why) => sheet.pick(`The board left USB for ${why} and the browser did not hand it back. Choose it again from the list.`),
+    pickAgain: (why) => sheet.pick(`The board disconnected during ${why}, and the browser didn't reconnect it. Select it again in the list.`),
   };
   let lastPort = port;
   try {
@@ -527,7 +527,7 @@ async function flashOwn(role, retryPort = null) {
       nodes.push(el("p", {}, el("strong", { text: "Written and compared." }), " The board has not said hello yet. Unplug it, plug it in again and press Connect to see what it runs."));
     }
     nodes.push(el("p", { class: "mono", text: `ESP32-C5 revision ${out.rev}, ${out.mac}` }));
-    if (role !== "master") nodes.push(el("p", { text: "On the master, press PORTS: this sensor's port should be green and name the new version." }));
+    if (role !== "master") nodes.push(el("p", { text: "To check, tap PORTS on the master. The sensor's port is green and shows the new version." }));
 
     // The board stays on the cable: keep talking to it. A master that was
     // connected before a sensor was flashed on another cable stays the connection.
@@ -549,9 +549,9 @@ async function flashOwn(role, retryPort = null) {
       send.addEventListener("click", async () => {
         send.disabled = true;
         const ack = await state.conn.link.cmd("set", { cfg: board.settings });
-        said.textContent = ack && ack.ok ? "The master took them." : "The master did not take them.";
+        said.textContent = ack && ack.ok ? "The master accepted the settings." : "The master didn't accept the settings.";
       });
-      nodes.push(el("p", { text: "This release names settings that a freshly flashed master does not have:" }),
+      nodes.push(el("p", { text: "This release recommends these settings, which a new flash doesn't include:" }),
         el("p", { class: "mono", text: JSON.stringify(board.settings) }), el("div", { class: "row" }, send, said));
     }
     sheet.finish(out.settled ? "green" : "amber", out.settled ? "DONE" : "CHECK IT", nodes);
@@ -572,12 +572,12 @@ async function flashOwn(role, retryPort = null) {
       const hint = HINTS[e.hint];
       if (hint) nodes.push(el("ol", {}, hint.map((h) => el("li", { text: h }))));
     } else if (e instanceof FileError) {
-      nodes.push(el("p", { text: "Nothing was sent to the board. The files on this site did not pass their checks: tell whoever runs it." }));
+      nodes.push(el("p", { text: "Nothing was written. The files on this site failed their checks. Report this to the site's maintainer." }));
     }
     sheet.finish("red", "FAILED", nodes, () => { sheet.close(); flashOwn(role, lastPort); });
     state.busy = false;
     render();
-    hero("fail", "FAILED", "The flash did not go through. The sheet says what state the board is in.");
+    hero("fail", "FAILED", "The flash didn't complete. The details show the board's state.");
   }
 }
 
@@ -609,7 +609,7 @@ async function flashThrough(role) {
       el("p", {}, el("strong", { text: `The ${b.noun} on port ${String(end.port).toUpperCase()} runs ${end.now}.` }), end.was ? ` It ran ${end.was} before.` : ""),
       el("p", { class: "mono", text: `written and compared at ${end.baud} baud in ${Math.round((end.ms ?? 0) / 1000)} s, try ${end.try ?? 1}` }),
     ];
-    if (end.version_ok === false) nodes.push(el("p", { text: `Its hello does not name the image's version (${rel.version}). Check on the master's PORTS screen that it runs what was sent.` }));
+    if (end.version_ok === false) nodes.push(el("p", { text: `The sensor reports a different version than ${rel.version}. Check the version on the master's PORTS screen.` }));
     sheet.finish(end.version_ok === false ? "amber" : "green", end.version_ok === false ? "CHECK IT" : "DONE", nodes);
     state.busy = false;
     render();
@@ -622,9 +622,9 @@ async function flashThrough(role) {
       return;
     }
     if (e instanceof ThroughError) {
-      nodes.push(el("p", { text: e.begun ? (LEFT[e.left] ?? "The sensor's state is not known: look at the master's PORTS screen.") : "Nothing reached the sensor." }));
+      nodes.push(el("p", { text: e.begun ? (LEFT[e.left] ?? "The sensor's state is unknown. Check the master's PORTS screen.") : "Nothing was written to the sensor." }));
     } else if (e instanceof FileError) {
-      nodes.push(el("p", { text: "Nothing was sent to the master. The file on this site did not pass its checks: tell whoever runs it." }));
+      nodes.push(el("p", { text: "Nothing was written. The file on this site failed its checks. Report this to the site's maintainer." }));
     }
     try { await refreshMaster(); } catch { /* the master may have gone */ }
     sheet.finish("red", "FAILED", nodes, () => { sheet.close(); flashThrough(role); });
@@ -641,21 +641,21 @@ async function pretend() {
   const serial = new sim.PretendSerial();
   const mk = (project, version, seed) => sim.makeImage({ project, version, size: 256 * 1024, seed });
   const opts = { pace: 1, awayMs: 500 };
-  const rfA = serial.add(new sim.PretendBoard({ name: "The same unit's RF sensor, by its own socket", kind: "xiao", image: await mk("widscan58", "c9dfff6", 3), mac: [0x10, 0xbd, 0xa3, 0x00, 0x0a, 0x03], ...opts }));
-  const ridA = serial.add(new sim.PretendBoard({ name: "The same unit's Remote ID sensor, by its own socket", kind: "xiao", image: await mk("c5_drone_detector", "0.7.0", 4), mac: [0x10, 0xbd, 0xa3, 0x00, 0x0a, 0x02], ...opts }));
-  const masterA = serial.add(sim.wire(new sim.PretendBoard({ name: "A unit's master", kind: "master", image: await mk("uas_detector_master", "0.10.0", 5), mac: [0x10, 0xbd, 0xa3, 0x00, 0x0a, 0x01], ...opts }), { a: rfA, b: ridA }));
+  const rfA = serial.add(new sim.PretendBoard({ name: "The RF sensor, through its own USB-C port", kind: "xiao", image: await mk("widscan58", "c9dfff6", 3), mac: [0x10, 0xbd, 0xa3, 0x00, 0x0a, 0x03], ...opts }));
+  const ridA = serial.add(new sim.PretendBoard({ name: "The Remote ID sensor, through its own USB-C port", kind: "xiao", image: await mk("c5_drone_detector", "0.7.0", 4), mac: [0x10, 0xbd, 0xa3, 0x00, 0x0a, 0x02], ...opts }));
+  const masterA = serial.add(sim.wire(new sim.PretendBoard({ name: "A master", kind: "master", image: await mk("uas_detector_master", "0.10.0", 5), mac: [0x10, 0xbd, 0xa3, 0x00, 0x0a, 0x01], ...opts }), { a: rfA, b: ridA }));
   const rfB = new sim.PretendBoard({ kind: "xiao", image: await mk("widscan58", "c9dfff6", 6), ...opts });
   const ridB = new sim.PretendBoard({ kind: "xiao", image: await mk("c5_drone_detector", "0.7.0", 7), ...opts });
   const masterB = serial.add(sim.wire(new sim.PretendBoard({ name: "A master that can flash its sensors", kind: "master", image: await mk("uas_detector_master", "0.13.0", 8), mac: [0x10, 0xbd, 0xa3, 0x00, 0x0b, 0x01], ...opts }), { a: rfB, b: ridB }));
-  const blank = serial.add(new sim.PretendBoard({ name: "A blank XIAO, held in its loader", kind: "xiao", image: null, inLoader: true, mac: [0x10, 0xbd, 0xa3, 0x00, 0x0c, 0x01], ...opts }));
-  const fresh = serial.add(new sim.PretendBoard({ name: "A new master, as its maker ships it", kind: "master", image: null, foreign: true, mac: [0x10, 0xbd, 0xa3, 0x00, 0x0d, 0x01], ...opts }));
+  const blank = serial.add(new sim.PretendBoard({ name: "A blank XIAO in its loader", kind: "xiao", image: null, inLoader: true, mac: [0x10, 0xbd, 0xa3, 0x00, 0x0c, 0x01], ...opts }));
+  const fresh = serial.add(new sim.PretendBoard({ name: "A new master from the factory", kind: "master", image: null, foreign: true, mac: [0x10, 0xbd, 0xa3, 0x00, 0x0d, 0x01], ...opts }));
   const about = new Map([
-    [masterA, "firmware 0.10.0; an RF sensor on port A, a Remote ID sensor on port B"],
-    [ridA, "firmware 0.7.0, a revision 1.0 chip"],
-    [rfA, "firmware c9dfff6, a revision 1.0 chip"],
-    [masterB, "firmware 0.13.0, the version that takes sensor images; sensors on both ports"],
-    [blank, "nothing on it; as with the BOOT button held while it was plugged in"],
-    [fresh, "it runs the maker's own firmware, which knows none of the page's commands"],
+    [masterA, "Firmware 0.10.0, with an RF sensor on port A and a Remote ID sensor on port B"],
+    [ridA, "Firmware 0.7.0, chip revision 1.0"],
+    [rfA, "Firmware c9dfff6, chip revision 1.0"],
+    [masterB, "Firmware 0.13.0, which can update sensors, with sensors on both ports"],
+    [blank, "No firmware, as when you hold BOOT while connecting it"],
+    [fresh, "Runs the manufacturer's firmware"],
   ]);
   const order = [masterA, fresh, ridA, rfA, masterB, blank];
   serial.choose = (boards) => new Promise((resolve) => {
@@ -680,7 +680,7 @@ async function start() {
     state.release = firstRelease(state.catalog);
     if (!state.release) throw new Error("the catalog lists no release");
   } catch (e) {
-    hero("fail", "NO CATALOG", "The list of releases could not be loaded: " + e.message);
+    hero("fail", "NO CATALOG", "The list of releases couldn't be loaded: " + e.message);
     $("connect").disabled = true;
     return;
   }

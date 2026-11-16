@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated": "2026-11-16T03:26:03Z",
+ "generated": "2026-11-16T04:43:50Z",
  "releases": [
   {
    "tag": "release-2026-11-15",
@@ -96,7 +96,7 @@
     "rf"
    ],
    "label": "Alpha (portrait screen)",
-   "note": "Validated on a unit through the night of 14 to 15 Nov 2026. The way back if the Beta gives trouble."
+   "note": "Validated on a unit on 14 and 15 Nov 2026. If the Beta causes problems, flash this release."
   },
   {
    "tag": "release-2026-11-16-beta",
@@ -151,7 +151,7 @@
     "rf"
    ],
    "label": "Beta (Anubis, landscape screen)",
-   "note": "The newest master, with the landscape screen. It is the most up to date, and it may contain bugs. For the sensors, use the Alpha."
+   "note": "The newest master firmware, with the landscape screen. It might contain bugs. For the sensors, use the Alpha release."
   }
  ]
 }

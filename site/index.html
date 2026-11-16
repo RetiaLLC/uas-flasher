@@ -20,15 +20,9 @@
 <body>
 
 <div class="demo-banner" id="demo-banner" hidden>
-  <strong>PRETEND BOARDS</strong>
-  <span>Nothing on this page talks to real hardware. The boards are made up, so that the page can be tried with nothing plugged in.</span>
+  <strong>MADE-UP BOARDS</strong>
+  <span>You're using made-up boards. Nothing on this page talks to real hardware.</span>
   <a href="./">Leave</a>
-</div>
-
-<!-- True on 16 Nov 2026. Take this out once a sensor has been flashed with this page. -->
-<div class="demo-banner" id="untried">
-  <strong>NEW</strong>
-  <span>This page has flashed one real master so far, from Chrome on 16 Nov 2026. No sensor has been flashed with it yet. A board that a flash leaves without firmware comes back through its BOOT button.</span>
 </div>
 
 <header class="top wrap">
@@ -56,7 +50,7 @@
     </div>
     <div class="hero-main">
       <p class="hero-word" id="hero-word" data-state="idle" aria-live="polite">READY</p>
-      <p class="hero-line" id="hero-line">Plug a board into this computer with a USB-C cable and press Connect. The page asks the board what it is, shows what it runs, and offers this release for it.</p>
+      <p class="hero-line" id="hero-line">Connect a board to your computer with a USB-C cable, then click Connect a board. The page shows what the board runs and which release you can install.</p>
       <div class="hero-actions">
         <button class="btn btn-main" id="connect" type="button">CONNECT A BOARD</button>
         <button class="btn" id="disconnect" type="button" hidden>DISCONNECT</button>
@@ -84,21 +78,23 @@
     <div class="help-grid">
       <div>
         <h3>Which cable goes where</h3>
-        <p>The master is the board with the screen. Its USB-C socket is all you need for the master itself.</p>
-        <p>Each sensor has a USB-C socket of its own. While you flash a sensor through its own socket, keep the cell or the master's USB plugged in as well: a cable in the sensor alone starves the rest of the unit.</p>
+        <p>To flash the master, the board with the screen, connect the cable to the master's USB-C port.</p>
+        <p>To flash a sensor through its own USB-C port, keep the battery or the master's USB cable connected too. A cable in the sensor alone doesn't supply enough power for the rest of the unit.</p>
       </div>
       <div>
         <h3>What an update keeps</h3>
-        <p>An update writes the bootloader, the partition table and the application. The master's settings, its paired phones and the signals it has learned sit elsewhere in its flash and are left alone, unless you tick the box that erases them.</p>
+        <p>An update keeps the master's settings, its paired phones, and the signals it has learned. To erase them, select the erase option on the master's card before you flash.</p>
+        <p>The first time you flash a new board, its settings area is erased.</p>
       </div>
       <div>
-        <h3>If a board does not answer</h3>
-        <p>Unplug its USB cable, hold its BOOT button, plug the cable in, and let go. The board then waits in its loader, and the page can write to it from there. A flash that was cut off is mended the same way.</p>
+        <h3>If a board doesn't respond</h3>
+        <p>Disconnect its USB cable. Hold the BOOT button, reconnect the cable, and then release the button. The board starts in its loader, and you can flash it again. This also recovers a board after an interrupted flash.</p>
       </div>
       <div>
-        <h3>What the page needs</h3>
-        <p>A browser with Web Serial on a computer: Chrome and Edge have it. Close other programs that hold the board's port, such as a serial monitor.</p>
-        <p>The page talks to the board on your USB port and fetches the firmware from this site. It sends nothing anywhere else.</p>
+        <h3>What you need</h3>
+        <p>Use Chrome or Edge on a computer. Phones and tablets can't use Web Serial.</p>
+        <p>Close other programs that use the board's port, such as a serial monitor.</p>
+        <p>The page downloads firmware from this site only and sends nothing to other sites.</p>
       </div>
     </div>
   </section>
@@ -106,15 +102,15 @@
 </main>
 
 <footer class="wrap foot">
-  <p>The detector only listens for aircraft and their controllers. Its sensors never transmit, and the master's one radio link is Bluetooth to a phone.</p>
-  <p class="foot-small">How to use the unit once it is flashed: the <a href="guide/">user guide</a>, its <a href="guide/quickstart.html">quickstart</a> and <a href="guide/how-to.html">how-to pages</a>.</p>
-  <p class="foot-small" id="demo-link"><a href="?demo">Try the page with pretend boards</a>.</p>
+  <p>The detector listens for aircraft and their controllers. The sensors don't transmit. The master's only radio link is Bluetooth to your phone.</p>
+  <p class="foot-small">To learn how to use the unit, see the <a href="guide/">user guide</a>, the <a href="guide/quickstart.html">quickstart</a>, and the <a href="guide/how-to.html">how-to pages</a>.</p>
+  <p class="foot-small" id="demo-link"><a href="?demo">Try the page with made-up boards</a>.</p>
   <details class="licences">
     <summary>LICENCES</summary>
     <ul>
-      <li>The flashing is done with esptool-js 0.7.1 by Espressif, under the <a href="vendor/esptool-js/LICENSE.txt">Apache License 2.0</a>, served from this site.</li>
-      <li>The typefaces are Space Grotesk and JetBrains Mono, under the SIL Open Font License 1.1: see the <a href="vendor/fonts/README.txt">note beside them</a>.</li>
-      <li>Both firmware images are built on ESP-IDF 5.5.1 (Apache License 2.0). The Remote ID sensor's firmware is itself under the Apache License 2.0.</li>
+      <li>Flashing uses esptool-js 0.7.1 by Espressif, licensed under the <a href="vendor/esptool-js/LICENSE.txt">Apache License 2.0</a>.</li>
+      <li>The fonts are Space Grotesk and JetBrains Mono, licensed under the <a href="vendor/fonts/README.txt">SIL Open Font License 1.1</a>.</li>
+      <li>The firmware is built with ESP-IDF 5.5.1 (Apache License 2.0). The Remote ID sensor firmware is licensed under the Apache License 2.0.</li>
     </ul>
   </details>
 </footer>
@@ -157,8 +153,8 @@
 <!-- Demo only: stands for the browser's own list of serial ports. -->
 <div class="sheet-back" id="chooser" hidden>
   <div class="sheet sheet-narrow" role="dialog" aria-modal="true" aria-labelledby="chooser-title">
-    <header class="sheet-head"><h2 id="chooser-title">PICK A PRETEND BOARD</h2></header>
-    <p class="sheet-sub">With real hardware the browser shows its own list of serial ports here.</p>
+    <header class="sheet-head"><h2 id="chooser-title">SELECT A MADE-UP BOARD</h2></header>
+    <p class="sheet-sub">With a real board, your browser shows its own list of serial ports instead.</p>
     <ul class="choices" id="chooser-list"></ul>
     <footer class="sheet-foot"><span class="grow"></span><button class="btn" id="chooser-cancel" type="button">CANCEL</button></footer>
   </div>

@@ -23,12 +23,12 @@ import { identify } from "./identify.js";
 import { GuardedPort, LineIO, waitForReturn } from "./port.js";
 
 export const DIRECT_STEPS = [
-  ["ask", "Ask the board what it is"],
-  ["loader", "Restart it into its loader"],
+  ["ask", "Check the board"],
+  ["loader", "Start the loader"],
   ["chip", "Read the chip"],
-  ["write", "Write and compare"],
-  ["restart", "Restart it"],
-  ["hello", "Wait for its hello"],
+  ["write", "Write and verify"],
+  ["restart", "Restart the board"],
+  ["hello", "Confirm the new version"],
 ];
 
 // The ESP32-C5's LP watchdog (ESP-IDF 5.5.1, soc/esp32c5: lp_wdt_reg.h, lpwdt_ll.h).
@@ -163,7 +163,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
       H.log(`the board did not come back by itself after ${why}`);
       back = await H.pickAgain(why);
     }
-    if (!back) throw new FlashError("loader", "The board left USB and did not come back.", { left: written ? "unknown" : "unchanged", hint: "replug" });
+    if (!back) throw new FlashError("loader", "The board disconnected and didn't reconnect.", { left: written ? "unknown" : "unchanged", hint: "replug" });
     guard.swap(back);
   };
 
@@ -174,7 +174,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
     try {
       await io.open();
     } catch (e) {
-      throw new FlashError("open", "The port could not be opened: " + (e && e.message ? e.message : e), { hint: "busy" });
+      throw new FlashError("open", "The port couldn't be opened: " + (e && e.message ? e.message : e), { hint: "busy" });
     }
     let who = await identify(io, { id: id++ });
     // A firmware has named itself: note it, and stop if it is not the board that was chosen.
@@ -185,7 +185,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
         const go = await H.confirm({ kind: "other-board", says: who.role, chosen: role, version: who.version });
         if (!go) {
           await io.close();
-          throw new FlashError("ask", `The board says it is the ${BOARDS[who.role].noun}. Nothing was written.`, { stopped: true });
+          throw new FlashError("ask", `This board is the ${BOARDS[who.role].noun}. Nothing was written.`, { stopped: true });
         }
       }
       if (who.role === "master" && who.caps.includes("flash")) {
@@ -198,12 +198,12 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
         const f = ack && ack.flash;
         if (f && (f.left === "loader" || ["receiving", "ready", "loader", "erasing", "writing", "verifying", "restarting"].includes(f.state))) {
           await io.close();
-          throw new FlashError("ask", "This master is in the middle of flashing a sensor, or holds one in its loader. Finish that first. Nothing was written.");
+          throw new FlashError("ask", "This master is flashing a sensor, or a sensor is in its loader. Finish that first. Nothing was written.");
         }
       }
     };
     if (who.role) await heard();
-    else H.step("ask", "done", who.heard ? "it sends something that is none of the three firmwares" : "it says nothing: trying its loader");
+    else H.step("ask", "done", who.heard ? "it runs other firmware" : "no response; trying the loader");
 
     // 2. Into the loader, by the firmware's own command.
     H.step("loader", "run");
@@ -285,7 +285,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
       }
     }
     if (!session) {
-      throw new FlashError("loader", "The board did not enter its loader.", { hint: who.role ? "boot-button" : "boot-button-silent" });
+      throw new FlashError("loader", "The board didn't start its loader.", { hint: who.role ? "boot-button" : "boot-button-silent" });
     }
     const { loader, transport } = session;
     H.step("loader", "done");
@@ -330,11 +330,11 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
     };
     if (!who.role && installedRole && installedRole !== role) {
       const go = await H.confirm({ kind: "other-board", says: installedRole, chosen: role, version: installed.version });
-      if (!go) await leaveUnchanged(`The board carries the ${BOARDS[installedRole].noun}'s firmware. Nothing was written.`);
+      if (!go) await leaveUnchanged(`This board runs ${BOARDS[installedRole].noun} firmware. Nothing was written.`);
     }
     if (flashBytes && flashBytes !== BOARDS[role].flashBytes) {
       const go = await H.confirm({ kind: "other-flash", chosen: role, flashBytes, expected: BOARDS[role].flashBytes });
-      if (!go) await leaveUnchanged(`The board has ${flashBytes / 1048576} MB of flash, and the ${BOARDS[role].noun}'s board has ${BOARDS[role].flashBytes / 1048576} MB. Nothing was written.`);
+      if (!go) await leaveUnchanged(`This board has ${flashBytes / 1048576} MB of flash, but the ${BOARDS[role].noun} has ${BOARDS[role].flashBytes / 1048576} MB. Nothing was written.`);
     }
 
     // 4. Write, and compare each file with the loader's MD5 of the flash.
@@ -366,7 +366,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
         },
       });
     } catch (e) {
-      throw new FlashError("write", "The write did not finish: " + (e && e.message ? e.message : e), { left: "loader", hint: "again" });
+      throw new FlashError("write", "The write didn't complete: " + (e && e.message ? e.message : e), { left: "loader", hint: "again" });
     }
     H.progress(total, total, "done");
     H.step("write", "done", `${parts.length} files, ${parts.reduce((n, p) => n + p.data.length, 0)} bytes, each compared` + (out.blanked ? "; settings partition blanked" : ""));
@@ -390,7 +390,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
     if (!back) back = await H.pickAgain("its restart");
     if (!back) {
       out.settled = false;
-      H.step("hello", "warn", "the board did not come back on USB: unplug it and plug it in again");
+      H.step("hello", "warn", "the board didn't reconnect; disconnect it and reconnect it");
       return out;
     }
     guard.swap(back);
@@ -444,7 +444,7 @@ export async function flashDirect({ serial, esptool, port, role, board, parts, w
       out.settled = now.role === role;
       H.step("hello", out.settled ? "done" : "warn", `${BOARDS[now.role].name}, firmware ${now.version ?? "of an unknown version"}`);
     } else {
-      H.step("hello", "warn", "it was written and compared, and it has not said hello yet");
+      H.step("hello", "warn", "written and verified; the board hasn't reported its version");
     }
     return out;
   } catch (e) {

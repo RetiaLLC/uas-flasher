@@ -58,8 +58,6 @@ h2, h3, p { margin: 0; }
 .demo-banner strong { font-family: var(--mono); letter-spacing: 0.08em; color: var(--amber); }
 .demo-banner a { color: #ffe6a6; }
 
-.notice-banner { background: #1d0a08; border-bottom-color: #6a241d; color: #ffd0ca; }
-.notice-banner strong { color: var(--red); }
 
 /* --- top bar ----------------------------------------------------------- */
 .top {
